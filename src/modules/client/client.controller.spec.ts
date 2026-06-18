@@ -3,9 +3,10 @@ import { Client } from '@prisma/client';
 import { ClientController } from './controller/ClientController';
 import { ClientRepository } from './repository/ClientRepository';
 import { ClientService } from './service/ClientService';
+import { ClientWithMetrics } from './types/client-with-metrics.type';
 
 // Teste de integração: Controller + Service reais, Repository mockado.
-const buildClient = (overrides: Partial<Client> = {}): Client => ({
+const buildClient = (overrides: Partial<Client> = {}): ClientWithMetrics => ({
   id: 1,
   tenantId: 1,
   nome: 'João Silva',
@@ -16,6 +17,8 @@ const buildClient = (overrides: Partial<Client> = {}): Client => ({
   observacoes: null,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
+  valorOrcado: 0,
+  valorVendido: 0,
   ...overrides,
 });
 

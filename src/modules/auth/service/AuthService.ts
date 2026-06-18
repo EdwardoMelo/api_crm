@@ -18,7 +18,7 @@ export class AuthService {
 
   async login(dto: LoginDTORequest): Promise<AuthDTOResponse> {
     try {
-      const user = await this.userRepository.findByTenantSlugAndEmail(dto.tenantSlug, dto.email);
+      const user = await this.userRepository.findByEmail(dto.email);
 
       if (!user || !user.ativo || !user.tenants.ativo) {
         throw new UnauthorizedException('Credenciais inválidas.');

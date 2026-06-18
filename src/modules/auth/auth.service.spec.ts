@@ -38,7 +38,7 @@ describe('AuthService', () => {
         {
           provide: UserRepository,
           useValue: {
-            findByTenantSlugAndEmail: jest.fn(),
+            findByEmail: jest.fn(),
             findByIdWithTenant: jest.fn(),
           },
         },
@@ -55,10 +55,9 @@ describe('AuthService', () => {
   });
 
   it('login retorna token para credenciais válidas', async () => {
-    userRepository.findByTenantSlugAndEmail.mockResolvedValue(mockUser);
+    userRepository.findByEmail.mockResolvedValue(mockUser);
 
     const result = await service.login({
-      tenantSlug: 'empresa-demo',
       email: 'admin@test.com',
       password: 'admin123',
     });
@@ -69,11 +68,10 @@ describe('AuthService', () => {
   });
 
   it('login rejeita senha incorreta', async () => {
-    userRepository.findByTenantSlugAndEmail.mockResolvedValue(mockUser);
+    userRepository.findByEmail.mockResolvedValue(mockUser);
 
     await expect(
       service.login({
-        tenantSlug: 'empresa-demo',
         email: 'admin@test.com',
         password: 'wrong',
       }),
@@ -81,11 +79,10 @@ describe('AuthService', () => {
   });
 
   it('login rejeita usuário inexistente', async () => {
-    userRepository.findByTenantSlugAndEmail.mockResolvedValue(null);
+    userRepository.findByEmail.mockResolvedValue(null);
 
     await expect(
       service.login({
-        tenantSlug: 'empresa-demo',
         email: 'missing@test.com',
         password: 'admin123',
       }),

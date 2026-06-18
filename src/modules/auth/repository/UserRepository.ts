@@ -6,12 +6,9 @@ import { UserWithTenant } from '../dto/response/MeDTOResponse';
 export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findByTenantSlugAndEmail(tenantSlug: string, email: string): Promise<UserWithTenant | null> {
+  findByEmail(email: string): Promise<UserWithTenant | null> {
     return this.prisma.users.findFirst({
-      where: {
-        email,
-        tenants: { slug: tenantSlug },
-      },
+      where: { email },
       include: {
         tenants: {
           select: { id: true, nome: true, slug: true, ativo: true },

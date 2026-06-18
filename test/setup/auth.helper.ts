@@ -43,7 +43,6 @@ export async function loginAsAdmin(app: INestApplication): Promise<string> {
   const response = await request(app.getHttpServer())
     .post('/api/auth/login')
     .send({
-      tenantSlug: AUTH_FIXTURE.tenantSlug,
       email: AUTH_FIXTURE.email,
       password: AUTH_FIXTURE.password,
     })

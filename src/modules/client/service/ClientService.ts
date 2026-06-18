@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Client } from '@prisma/client';
 import { EntityNotFoundException } from '../../../common/exceptions';
 import { CreateClientDTORequest } from '../dto/request/CreateClientDTORequest';
 import { UpdateClientDTORequest } from '../dto/request/UpdateClientDTORequest';
 import { ClientDTOResponse } from '../dto/response/ClientDTOResponse';
 import { ClientRepository } from '../repository/ClientRepository';
+import { ClientWithMetrics } from '../types/client-with-metrics.type';
 
 @Injectable()
 export class ClientService {
@@ -41,13 +41,13 @@ export class ClientService {
 
   async findById(id: number): Promise<ClientDTOResponse> {
     const client = await this.getExistingClient(id);
-    return ClientDTOResponse.fromEntity(client);
+    return ClientDTOResponse.fromEntityWithMetrics(client);
   }
 
   async update(id: number, dto: UpdateClientDTORequest): Promise<ClientDTOResponse> {
     await this.getExistingClient(id);
     try {
-      const client = await this.clientRepository.update(id, {
+      await this.clientRepository.update(id, {
         nome: dto.nome,
         email: dto.email,
         telefone: dto.telefone,
@@ -55,7 +55,7 @@ export class ClientService {
         documento: dto.documento,
         observacoes: dto.observacoes,
       });
-      return ClientDTOResponse.fromEntity(client);
+      return this.findById(id);
     } catch (error) {
       this.logger.error(`Erro ao atualizar cliente ${id}`, (error as Error).stack);
       throw error;
@@ -72,7 +72,7 @@ export class ClientService {
     }
   }
 
-  private async getExistingClient(id: number): Promise<Client> {
+  private async getExistingClient(id: number): Promise<ClientWithMetrics> {
     const client = await this.clientRepository.findById(id);
     if (!client) {
       throw new EntityNotFoundException('Cliente', id);

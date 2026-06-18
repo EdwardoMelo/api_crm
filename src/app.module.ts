@@ -10,6 +10,8 @@ import { BudgetModule } from './modules/budget/budget.module';
 import { CashFlowModule } from './modules/cashflow/cashflow.module';
 import { EmailModule } from './modules/email/email.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { StorageModule } from './modules/storage/storage.module';
+import { TenantFiscalModule } from './modules/tenant-fiscal/tenant-fiscal.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     CashFlowModule,
     EmailModule,
     DashboardModule,
+    StorageModule,
+    TenantFiscalModule,
   ],
 })
 export class AppModule {}

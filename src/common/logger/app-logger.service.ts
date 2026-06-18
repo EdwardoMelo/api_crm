@@ -14,7 +14,8 @@ export class AppLogger extends ConsoleLogger {
     if (env === 'production') {
       return ['error', 'warn', 'log'];
     }
-    if (env === 'test') {
+    // Suprime logs verbosos só no Jest — NODE_ENV=test no .env (ex.: USE_TEST_DB) não deve silenciar o dev server
+    if (env === 'test' && process.env.JEST_WORKER_ID !== undefined) {
       return ['error', 'warn'];
     }
     return ['error', 'warn', 'log', 'debug', 'verbose'];

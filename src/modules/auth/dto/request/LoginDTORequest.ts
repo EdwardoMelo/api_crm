@@ -3,12 +3,6 @@ import { Trim } from '../../../../common/decorators';
 
 export class LoginDTORequest {
   @Trim()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
-  tenantSlug: string;
-
-  @Trim()
   @IsEmail()
   @MaxLength(180)
   email: string;

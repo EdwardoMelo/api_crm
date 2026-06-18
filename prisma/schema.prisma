@@ -73,22 +73,23 @@ model Budget {
 }
 
 model Project {
-  id              Int           @id @default(autoincrement())
+  id              Int             @id @default(autoincrement())
   clienteId       Int
-  budgetId        Int?          @unique
+  budgetId        Int?            @unique
   titulo          String
-  descricao       String?       @db.Text
-  valorTotal      Decimal       @db.Decimal(12, 2)
-  status          ProjectStatus @default(PLANEJADO)
+  descricao       String?         @db.Text
+  valorTotal      Decimal         @db.Decimal(12, 2)
+  status          ProjectStatus   @default(PLANEJADO)
   dataInicio      DateTime?
   dataFimPrevista DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
   tenantId        Int
   cashFlows       CashFlow[]
-  budget          Budget?       @relation(fields: [budgetId], references: [id])
-  cliente         Client        @relation(fields: [clienteId], references: [id])
-  tenants         tenants       @relation(fields: [tenantId], references: [id])
+  project_files   project_files[]
+  budget          Budget?         @relation(fields: [budgetId], references: [id])
+  cliente         Client          @relation(fields: [clienteId], references: [id])
+  tenants         tenants         @relation(fields: [tenantId], references: [id])
 
   @@index([clienteId])
   @@index([status])
@@ -144,19 +145,21 @@ model EmailLog {
 }
 
 model tenants {
-  id         Int        @id @default(autoincrement())
-  nome       String
-  slug       String     @unique
-  ativo      Boolean    @default(true)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime
-  budgets    Budget[]
-  cash_flows CashFlow[]
-  clients    Client[]
-  email_logs EmailLog[]
-  employees  Employee[]
-  projects   Project[]
-  users      users[]
+  id                 Int                 @id @default(autoincrement())
+  nome               String
+  slug               String              @unique
+  ativo              Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime
+  budgets            Budget[]
+  cash_flows         CashFlow[]
+  clients            Client[]
+  email_logs         EmailLog[]
+  employees          Employee[]
+  project_files      project_files[]
+  projects           Project[]
+  tenant_fiscal_info tenant_fiscal_info?
+  users              users[]
 
   @@index([ativo])
   @@index([nome])
@@ -178,6 +181,47 @@ model users {
   @@index([ativo])
   @@index([email])
   @@index([tenantId])
+}
+
+model project_files {
+  id          Int      @id @default(autoincrement())
+  tenantId    Int
+  projectId   Int
+  fileName    String   @db.VarChar(255)
+  storagePath String   @db.VarChar(512)
+  mimeType    String   @db.VarChar(127)
+  sizeBytes   Int
+  createdAt   DateTime @default(now())
+  projects    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tenants     tenants  @relation(fields: [tenantId], references: [id])
+
+  @@index([projectId], map: "project_files_projectId_fkey")
+  @@index([tenantId, projectId])
+}
+
+model tenant_fiscal_info {
+  id                  Int                                  @id @default(autoincrement())
+  tenantId            Int                                  @unique
+  razaoSocial         String                               @db.VarChar(255)
+  nomeFantasia        String?                              @db.VarChar(255)
+  cnpj                String                               @db.VarChar(14)
+  inscricaoEstadual   String?                              @db.VarChar(30)
+  inscricaoMunicipal  String?                              @db.VarChar(30)
+  regimeTributario    tenant_fiscal_info_regimeTributario?
+  cnaePrincipal       String?                              @db.VarChar(10)
+  emailFiscal         String?                              @db.VarChar(180)
+  telefone            String?                              @db.VarChar(20)
+  logradouro          String?                              @db.VarChar(255)
+  numero              String?                              @db.VarChar(20)
+  complemento         String?                              @db.VarChar(100)
+  bairro              String?                              @db.VarChar(100)
+  cep                 String?                              @db.VarChar(8)
+  cidade              String?                              @db.VarChar(100)
+  uf                  String?                              @db.Char(2)
+  codigoIbgeMunicipio String?                              @db.VarChar(7)
+  createdAt           DateTime                             @default(now())
+  updatedAt           DateTime
+  tenants             tenants                              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 enum TipoContratacao {
@@ -224,4 +268,11 @@ enum EmailStatus {
 enum users_role {
   ADMIN
   USUARIO
+}
+
+enum tenant_fiscal_info_regimeTributario {
+  SIMPLES_NACIONAL
+  LUCRO_PRESUMIDO
+  LUCRO_REAL
+  MEI
 }

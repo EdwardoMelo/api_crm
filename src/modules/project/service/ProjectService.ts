@@ -1,16 +1,27 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma, Project, ProjectStatus } from '@prisma/client';
 import { EntityNotFoundException } from '../../../common/exceptions';
+import {
+  FILE_STORAGE,
+  FileStorageProvider,
+} from '../../storage/storage.interface';
 import { CreateProjectDTORequest } from '../dto/request/CreateProjectDTORequest';
 import { UpdateProjectDTORequest } from '../dto/request/UpdateProjectDTORequest';
 import { ProjectDTOResponse } from '../dto/response/ProjectDTOResponse';
+import { ProjectFileDTOResponse } from '../dto/response/ProjectFileDTOResponse';
+import { ProjectFileRepository } from '../repository/ProjectFileRepository';
 import { ProjectRepository } from '../repository/ProjectRepository';
+import { buildStoragePath, validateProjectFile } from '../utils/project-file.utils';
 
 @Injectable()
 export class ProjectService {
   private readonly logger = new Logger(ProjectService.name);
 
-  constructor(private readonly projectRepository: ProjectRepository) {}
+  constructor(
+    private readonly projectRepository: ProjectRepository,
+    private readonly projectFileRepository: ProjectFileRepository,
+    @Inject(FILE_STORAGE) private readonly fileStorage: FileStorageProvider,
+  ) {}
 
   async create(dto: CreateProjectDTORequest): Promise<ProjectDTOResponse> {
     try {
@@ -71,9 +82,78 @@ export class ProjectService {
   async remove(id: number): Promise<void> {
     await this.getExistingProject(id);
     try {
+      const files = await this.projectFileRepository.findByProjectId(id);
+      await Promise.all(
+        files.map((file) =>
+          this.fileStorage.delete(file.storagePath).catch((error) => {
+            this.logger.warn(
+              `Falha ao excluir ${file.storagePath} no storage: ${(error as Error).message}`,
+            );
+          }),
+        ),
+      );
       await this.projectRepository.delete(id);
     } catch (error) {
       this.logger.error(`Erro ao excluir projeto ${id}`, (error as Error).stack);
+      throw error;
+    }
+  }
+
+  async addFile(projectId: number, file: Express.Multer.File): Promise<ProjectFileDTOResponse> {
+    const project = await this.getExistingProject(projectId);
+    validateProjectFile(file);
+
+    const tenantId = project.tenantId;
+    const storagePath = buildStoragePath(tenantId, projectId, file.originalname);
+
+    try {
+      await this.fileStorage.upload(storagePath, file.buffer, file.mimetype);
+    } catch (error) {
+      this.logger.error(`Erro ao enviar arquivo do projeto ${projectId}`, (error as Error).stack);
+      throw error;
+    }
+
+    try {
+      const entity = await this.projectFileRepository.create({
+        tenantId,
+        projectId,
+        fileName: file.originalname,
+        storagePath,
+        mimeType: file.mimetype,
+        sizeBytes: file.size,
+      });
+      const downloadUrl = await this.fileStorage.getSignedUrl(storagePath);
+      return ProjectFileDTOResponse.fromEntity(entity, downloadUrl);
+    } catch (error) {
+      await this.fileStorage.delete(storagePath).catch(() => undefined);
+      this.logger.error(`Erro ao registrar arquivo do projeto ${projectId}`, (error as Error).stack);
+      throw error;
+    }
+  }
+
+  async listFiles(projectId: number): Promise<ProjectFileDTOResponse[]> {
+    await this.getExistingProject(projectId);
+    const files = await this.projectFileRepository.findByProjectId(projectId);
+    return ProjectFileDTOResponse.fromEntities(files, (path) =>
+      this.fileStorage.getSignedUrl(path),
+    );
+  }
+
+  async deleteFile(projectId: number, fileId: number): Promise<void> {
+    await this.getExistingProject(projectId);
+    const file = await this.projectFileRepository.findById(projectId, fileId);
+    if (!file) {
+      throw new EntityNotFoundException('Arquivo do projeto', fileId);
+    }
+
+    try {
+      await this.fileStorage.delete(file.storagePath);
+      await this.projectFileRepository.delete(fileId);
+    } catch (error) {
+      this.logger.error(
+        `Erro ao excluir arquivo ${fileId} do projeto ${projectId}`,
+        (error as Error).stack,
+      );
       throw error;
     }
   }

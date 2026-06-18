@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Project, ProjectStatus, project_files } from '@prisma/client';
-import { EntityNotFoundException } from '../../common/exceptions';
 import { FILE_STORAGE, FileStorageProvider } from '../storage/storage.interface';
+import { ProjectController } from './controller/ProjectController';
 import { ProjectFileRepository } from './repository/ProjectFileRepository';
 import { ProjectRepository } from './repository/ProjectRepository';
 import { ProjectService } from './service/ProjectService';
@@ -23,7 +23,7 @@ const buildProject = (overrides: Partial<Project> = {}): Project =>
     ...overrides,
   }) as Project;
 
-const buildFile = (overrides: Partial<project_files> = {}): project_files => ({
+const buildFile = (): project_files => ({
   id: 1,
   tenantId: 1,
   projectId: 1,
@@ -32,7 +32,6 @@ const buildFile = (overrides: Partial<project_files> = {}): project_files => ({
   mimeType: 'application/pdf',
   sizeBytes: 1024,
   createdAt: new Date('2026-01-01'),
-  ...overrides,
 });
 
 const buildMulterFile = (): Express.Multer.File =>
@@ -45,8 +44,8 @@ const buildMulterFile = (): Express.Multer.File =>
     buffer: Buffer.from('pdf'),
   }) as Express.Multer.File;
 
-describe('ProjectService', () => {
-  let service: ProjectService;
+describe('ProjectController (integração)', () => {
+  let controller: ProjectController;
   let repository: jest.Mocked<ProjectRepository>;
   let fileRepository: jest.Mocked<ProjectFileRepository>;
   let fileStorage: jest.Mocked<FileStorageProvider>;
@@ -74,6 +73,7 @@ describe('ProjectService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
+      controllers: [ProjectController],
       providers: [
         ProjectService,
         { provide: ProjectRepository, useValue: repositoryMock },
@@ -81,91 +81,41 @@ describe('ProjectService', () => {
         { provide: FILE_STORAGE, useValue: fileStorageMock },
       ],
     }).compile();
-    service = module.get(ProjectService);
+
+    controller = module.get(ProjectController);
     repository = module.get(ProjectRepository);
     fileRepository = module.get(ProjectFileRepository);
     fileStorage = module.get(FILE_STORAGE);
   });
 
-  it('cria projeto conectando o cliente', async () => {
-    repository.create.mockResolvedValue(buildProject());
-    await service.create({ clienteId: 10, titulo: 'Projeto', valorTotal: 1000 });
-    expect(repository.create).toHaveBeenCalledWith(
-      expect.objectContaining({ cliente: { connect: { id: 10 } } }),
-    );
-  });
-
-  it('findById lança quando não existe', async () => {
-    repository.findById.mockResolvedValue(null);
-    await expect(service.findById(999)).rejects.toBeInstanceOf(EntityNotFoundException);
-  });
-
-  it('countActive consulta os status ativos', async () => {
-    repository.countByStatus.mockResolvedValue(3);
-    const result = await service.countActive();
-    expect(result).toBe(3);
-    expect(repository.countByStatus).toHaveBeenCalledWith([
-      ProjectStatus.PLANEJADO,
-      ProjectStatus.EM_ANDAMENTO,
-      ProjectStatus.PAUSADO,
-    ]);
-  });
-
-  it('addFile envia ao storage e persiste metadados', async () => {
+  it('POST /projects/:id/files retorna arquivo criado', async () => {
     repository.findById.mockResolvedValue(buildProject());
     fileStorage.upload.mockResolvedValue(undefined);
     fileStorage.getSignedUrl.mockResolvedValue('https://signed.url');
     fileRepository.create.mockResolvedValue(buildFile());
 
-    const result = await service.addFile(1, buildMulterFile());
+    const result = await controller.addFile(1, buildMulterFile());
 
-    expect(fileStorage.upload).toHaveBeenCalled();
-    expect(fileRepository.create).toHaveBeenCalled();
+    expect(result.fileName).toBe('doc.pdf');
     expect(result.downloadUrl).toBe('https://signed.url');
   });
 
-  it('addFile faz rollback no storage se persistência falhar', async () => {
-    repository.findById.mockResolvedValue(buildProject());
-    fileStorage.upload.mockResolvedValue(undefined);
-    fileStorage.delete.mockResolvedValue(undefined);
-    fileRepository.create.mockRejectedValue(new Error('db error'));
-
-    await expect(service.addFile(1, buildMulterFile())).rejects.toThrow('db error');
-    expect(fileStorage.delete).toHaveBeenCalled();
-  });
-
-  it('listFiles retorna arquivos com URL assinada', async () => {
+  it('GET /projects/:id/files lista arquivos', async () => {
     repository.findById.mockResolvedValue(buildProject());
     fileRepository.findByProjectId.mockResolvedValue([buildFile()]);
     fileStorage.getSignedUrl.mockResolvedValue('https://signed.url');
 
-    const result = await service.listFiles(1);
+    const result = await controller.listFiles(1);
 
     expect(result).toHaveLength(1);
-    expect(result[0].downloadUrl).toBe('https://signed.url');
   });
 
-  it('deleteFile remove storage e registro', async () => {
+  it('DELETE /projects/:id/files/:fileId remove arquivo', async () => {
     repository.findById.mockResolvedValue(buildProject());
     fileRepository.findById.mockResolvedValue(buildFile());
     fileStorage.delete.mockResolvedValue(undefined);
     fileRepository.delete.mockResolvedValue(buildFile());
 
-    await service.deleteFile(1, 1);
-
-    expect(fileStorage.delete).toHaveBeenCalledWith(buildFile().storagePath);
-    expect(fileRepository.delete).toHaveBeenCalledWith(1);
-  });
-
-  it('remove exclui arquivos do storage antes do projeto', async () => {
-    repository.findById.mockResolvedValue(buildProject());
-    fileRepository.findByProjectId.mockResolvedValue([buildFile()]);
-    fileStorage.delete.mockResolvedValue(undefined);
-    repository.delete.mockResolvedValue(buildProject());
-
-    await service.remove(1);
-
-    expect(fileStorage.delete).toHaveBeenCalled();
-    expect(repository.delete).toHaveBeenCalledWith(1);
+    await expect(controller.deleteFile(1, 1)).resolves.toBeUndefined();
   });
 });

@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { EmailLog, Prisma } from '@prisma/client';
 
 import { TenantContextService } from '../../../common/tenant';
+import { ActorContextService, auditCreateFields } from '../../../common/audit';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 
@@ -12,13 +13,15 @@ export class EmailLogRepository {
     private readonly prisma: PrismaService,
 
     private readonly tenantContext: TenantContextService,
+
+    private readonly actorContext: ActorContextService,
   ) {}
 
   create(data: Omit<Prisma.EmailLogCreateInput, 'tenants'>): Promise<EmailLog> {
     return this.prisma.emailLog.create({
       data: {
         ...data,
-
+        ...auditCreateFields(this.actorContext.getActorIdOrSystem()),
         tenants: { connect: { id: this.tenantContext.getTenantId() } },
       },
     });

@@ -9,8 +9,11 @@ import { UserRepository } from './repository/UserRepository';
 import { AuthService } from './service/AuthService';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
+import { PrismaModule } from '../../prisma/prisma.module';
+
 @Module({
   imports: [
+    PrismaModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

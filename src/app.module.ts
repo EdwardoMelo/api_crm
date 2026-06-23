@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AuditModule } from './common/audit';
 import { TenantModule } from './common/tenant';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -17,6 +18,7 @@ import { TenantFiscalModule } from './modules/tenant-fiscal/tenant-fiscal.module
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TenantModule,
+    AuditModule,
     PrismaModule,
     AuthModule,
     ClientModule,

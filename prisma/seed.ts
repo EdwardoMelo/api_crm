@@ -12,12 +12,21 @@ import {
 } from '@prisma/client';
 
 import { resolveDatabaseUrl } from '../src/prisma/database-url';
+import { cleanSystemData } from '../src/prisma/clean-system-data';
+import { SYSTEM_ACTOR, auditCreateFields } from '../src/common/audit';
 
 config();
 
 if (process.env.NODE_ENV === 'production') {
   throw new Error('Seed não pode ser executado em produção.');
 }
+
+/**
+ * Este seed cria dados de demonstração com createdBy = 'system'.
+ * Eles são removidos automaticamente antes dos testes e2e.
+ *
+ * Para um admin persistente (não apagado pelos testes), cadastre-se via POST /api/auth/register.
+ */
 
 // A URL é escolhida pelo ambiente (DATABASE_TEST_URL quando NODE_ENV=test ou USE_TEST_DB=true).
 
@@ -41,23 +50,10 @@ async function main(): Promise<void> {
 
   console.log(`🌱 Iniciando seed no banco de ${target}...`);
 
-  // Limpa em ordem segura por causa das FKs
+  const systemAudit = auditCreateFields(SYSTEM_ACTOR);
 
-  await prisma.cashFlow.deleteMany();
-
-  await prisma.project.deleteMany();
-
-  await prisma.budget.deleteMany();
-
-  await prisma.employee.deleteMany();
-
-  await prisma.client.deleteMany();
-
-  await prisma.emailLog.deleteMany();
-
-  await prisma.users.deleteMany();
-
-  await prisma.tenants.deleteMany();
+  // Remove apenas dados de seed/e2e anteriores (createdBy = 'system')
+  await cleanSystemData(prisma);
 
   const now = new Date();
 
@@ -72,6 +68,8 @@ async function main(): Promise<void> {
       ativo: true,
 
       updatedAt: now,
+
+      ...systemAudit,
     },
   });
 
@@ -92,6 +90,8 @@ async function main(): Promise<void> {
       ativo: true,
 
       updatedAt: now,
+
+      ...systemAudit,
     },
   });
 
@@ -112,6 +112,8 @@ async function main(): Promise<void> {
       documento: '12.345.678/0001-90',
 
       observacoes: 'Cliente recorrente.',
+
+      ...systemAudit,
     },
   });
 
@@ -128,6 +130,8 @@ async function main(): Promise<void> {
       empresa: 'Globex S.A.',
 
       documento: '98.765.432/0001-21',
+
+      ...systemAudit,
     },
   });
 
@@ -151,6 +155,8 @@ async function main(): Promise<void> {
         salarioBase: 8000,
 
         ativo: true,
+
+        ...systemAudit,
       },
 
       {
@@ -167,6 +173,8 @@ async function main(): Promise<void> {
         salarioBase: 6000,
 
         ativo: true,
+
+        ...systemAudit,
       },
 
       {
@@ -181,6 +189,8 @@ async function main(): Promise<void> {
         tipoContratacao: TipoContratacao.FREELANCER,
 
         ativo: false,
+
+        ...systemAudit,
       },
     ],
   });
@@ -206,6 +216,8 @@ async function main(): Promise<void> {
       status: BudgetStatus.APROVADO,
 
       dataValidade: monthOffset(1),
+
+      ...systemAudit,
     },
   });
 
@@ -224,6 +236,8 @@ async function main(): Promise<void> {
       status: BudgetStatus.ENVIADO,
 
       dataValidade: monthOffset(2),
+
+      ...systemAudit,
     },
   });
 
@@ -248,13 +262,15 @@ async function main(): Promise<void> {
       dataInicio: new Date(),
 
       dataFimPrevista: monthOffset(2),
+
+      ...systemAudit,
     },
   });
 
   await prisma.budget.update({
     where: { id: budgetAprovado.id },
 
-    data: { status: BudgetStatus.CONVERTIDO },
+    data: { status: BudgetStatus.CONVERTIDO, updatedBy: SYSTEM_ACTOR },
   });
 
   // ── Fluxo de caixa ────────────────────────────────────────
@@ -281,6 +297,8 @@ async function main(): Promise<void> {
         projectId: projeto.id,
 
         clientId: acme.id,
+
+        ...systemAudit,
       },
 
       {
@@ -301,6 +319,8 @@ async function main(): Promise<void> {
         projectId: projeto.id,
 
         clientId: acme.id,
+
+        ...systemAudit,
       },
 
       {
@@ -321,6 +341,8 @@ async function main(): Promise<void> {
         categoria: 'Folha de pagamento',
 
         employeeId: developer?.id,
+
+        ...systemAudit,
       },
 
       {
@@ -337,6 +359,8 @@ async function main(): Promise<void> {
         dataCompetencia: monthOffset(1),
 
         categoria: 'Infraestrutura',
+
+        ...systemAudit,
       },
     ],
   });

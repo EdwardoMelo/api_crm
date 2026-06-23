@@ -17,6 +17,8 @@ const buildClient = (overrides: Partial<Client> = {}): ClientWithMetrics => ({
   observacoes: null,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
+  createdBy: '1',
+  updatedBy: '1',
   valorOrcado: 0,
   valorVendido: 0,
   ...overrides,

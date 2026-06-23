@@ -61,4 +61,28 @@ describe('Auth (e2e)', () => {
   it('rotas protegidas retornam 401 sem token', async () => {
     await request(app.getHttpServer()).get('/api/clients').expect(401);
   });
+
+  it('POST /auth/register cria conta e permite login', async () => {
+    await request(app.getHttpServer())
+      .post('/api/auth/register')
+      .send({
+        accountType: 'EMPRESA',
+        nome: 'Carlos Eng',
+        nomeEmpresa: 'Projetos CS',
+        email: 'carlos@daitx.test',
+        password: 'senha1234',
+      })
+      .expect(201);
+
+    const loginResponse = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({
+        email: 'carlos@daitx.test',
+        password: 'senha1234',
+      })
+      .expect(200);
+
+    expect(loginResponse.body.accessToken).toBeDefined();
+    expect(loginResponse.body.user.tenantNome).toBe('Projetos CS');
+  });
 });

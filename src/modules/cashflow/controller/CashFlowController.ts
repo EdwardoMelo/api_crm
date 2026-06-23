@@ -9,11 +9,16 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { CreateCashFlowDTORequest } from '../dto/request/CreateCashFlowDTORequest';
 import { UpdateCashFlowDTORequest } from '../dto/request/UpdateCashFlowDTORequest';
 import { CashFlowDTOResponse } from '../dto/response/CashFlowDTOResponse';
 import { CashFlowService } from '../service/CashFlowService';
+import { MAX_CASH_FLOW_INVOICE_SIZE_BYTES } from '../utils/cash-flow-invoice.utils';
 
 @Controller('cashflow')
 export class CashFlowController {
@@ -27,6 +32,26 @@ export class CashFlowController {
   @Get()
   findAll(): Promise<CashFlowDTOResponse[]> {
     return this.cashFlowService.findAll();
+  }
+
+  @Post(':id/nota-fiscal')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: MAX_CASH_FLOW_INVOICE_SIZE_BYTES },
+    }),
+  )
+  uploadNotaFiscal(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<CashFlowDTOResponse> {
+    return this.cashFlowService.uploadNotaFiscal(id, file);
+  }
+
+  @Delete(':id/nota-fiscal')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeNotaFiscal(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    return this.cashFlowService.removeNotaFiscal(id);
   }
 
   @Get(':id')

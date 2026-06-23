@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProjectStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { mockTenantContextProvider } from '../../common/tenant/tenant-context.mock';
+import { mockActorContextProvider } from '../../common/audit/actor-context.mock';
 import { ProjectRepository } from './repository/ProjectRepository';
 
 describe('ProjectRepository', () => {
@@ -24,6 +25,7 @@ describe('ProjectRepository', () => {
         ProjectRepository,
         { provide: PrismaService, useValue: prisma },
         mockTenantContextProvider,
+        mockActorContextProvider,
       ],
     }).compile();
     repository = module.get(ProjectRepository);

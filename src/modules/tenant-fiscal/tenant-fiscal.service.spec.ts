@@ -25,6 +25,8 @@ const buildFiscalInfo = (): tenant_fiscal_info => ({
   codigoIbgeMunicipio: '3550308',
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
+  createdBy: '1',
+  updatedBy: '1',
 });
 
 describe('TenantFiscalService', () => {

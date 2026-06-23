@@ -1,5 +1,6 @@
 import { CashFlow } from '@prisma/client';
 import { CashFlowStatus, CashFlowType } from '../../../../common/enums';
+import { CashFlowNotaFiscalDTOResponse } from './CashFlowNotaFiscalDTOResponse';
 
 export class CashFlowDTOResponse {
   id: number;
@@ -13,6 +14,7 @@ export class CashFlowDTOResponse {
   projectId: number | null;
   clientId: number | null;
   employeeId: number | null;
+  notaFiscal: CashFlowNotaFiscalDTOResponse | null;
   createdAt: Date;
   updatedAt: Date;
 
@@ -29,6 +31,7 @@ export class CashFlowDTOResponse {
     dto.projectId = entity.projectId;
     dto.clientId = entity.clientId;
     dto.employeeId = entity.employeeId;
+    dto.notaFiscal = null;
     dto.createdAt = entity.createdAt;
     dto.updatedAt = entity.updatedAt;
     return dto;

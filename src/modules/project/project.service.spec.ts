@@ -18,10 +18,12 @@ const buildProject = (overrides: Partial<Project> = {}): Project =>
     status: ProjectStatus.PLANEJADO,
     dataInicio: null,
     dataFimPrevista: null,
-    createdAt: new Date('2026-01-01'),
-    updatedAt: new Date('2026-01-01'),
-    ...overrides,
-  }) as Project;
+  createdAt: new Date('2026-01-01'),
+  updatedAt: new Date('2026-01-01'),
+  createdBy: 'system',
+  updatedBy: 'system',
+  ...overrides,
+}) as Project;
 
 const buildFile = (overrides: Partial<project_files> = {}): project_files => ({
   id: 1,
@@ -32,6 +34,8 @@ const buildFile = (overrides: Partial<project_files> = {}): project_files => ({
   mimeType: 'application/pdf',
   sizeBytes: 1024,
   createdAt: new Date('2026-01-01'),
+  createdBy: '1',
+  updatedBy: '1',
   ...overrides,
 });
 

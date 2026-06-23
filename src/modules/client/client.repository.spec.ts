@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../prisma/prisma.service';
 
 import { mockTenantContextProvider } from '../../common/tenant/tenant-context.mock';
+import { mockActorContextProvider } from '../../common/audit/actor-context.mock';
 
 import { ClientRepository } from './repository/ClientRepository';
 
@@ -33,6 +34,7 @@ describe('ClientRepository', () => {
         ClientRepository,
         { provide: PrismaService, useValue: prisma },
         mockTenantContextProvider,
+        mockActorContextProvider,
       ],
     }).compile();
 
@@ -49,6 +51,10 @@ describe('ClientRepository', () => {
         nome: 'a',
 
         email: 'a@a.com',
+
+        createdBy: '1',
+
+        updatedBy: '1',
 
         tenants: { connect: { id: 1 } },
       },

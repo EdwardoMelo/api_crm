@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../prisma/prisma.service';
 
 import { mockTenantContextProvider } from '../../common/tenant/tenant-context.mock';
+import { mockActorContextProvider } from '../../common/audit/actor-context.mock';
 
 import { BudgetRepository } from './repository/BudgetRepository';
 
@@ -31,6 +32,7 @@ describe('BudgetRepository', () => {
         BudgetRepository,
         { provide: PrismaService, useValue: prisma },
         mockTenantContextProvider,
+        mockActorContextProvider,
       ],
     }).compile();
 
@@ -57,7 +59,7 @@ describe('BudgetRepository', () => {
     expect(prisma.budget.update).toHaveBeenCalledWith({
       where: { id: 1 },
 
-      data: { titulo: 'x' },
+      data: { titulo: 'x', updatedBy: '1' },
     });
   });
 });

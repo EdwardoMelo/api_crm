@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { resolveDatabaseUrl } from './database-url';
+import { cleanSystemData } from './clean-system-data';
 
 /**
  * Único ponto de acesso ao Prisma Client.
@@ -32,20 +33,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   /**
-   * Utilitário para limpar todas as tabelas (usado em testes E2E).
-   * A ordem respeita as foreign keys.
+   * Utilitário para limpar dados de seed/e2e (createdBy = 'system') nos testes E2E.
+   * Registros criados por usuários reais são preservados.
    */
   async cleanDatabase(): Promise<void> {
     if (process.env.NODE_ENV === 'production') {
       throw new Error('cleanDatabase não pode ser executado em produção.');
     }
-    await this.cashFlow.deleteMany();
-    await this.project.deleteMany();
-    await this.budget.deleteMany();
-    await this.employee.deleteMany();
-    await this.client.deleteMany();
-    await this.emailLog.deleteMany();
-    await this.users.deleteMany();
-    await this.tenants.deleteMany();
+    await cleanSystemData(this);
   }
 }

@@ -1,9 +1,10 @@
 import { config } from 'dotenv';
 import { PrismaClient } from '@prisma/client';
+import { cleanSystemData } from '../../src/prisma/clean-system-data';
 
 /**
  * Roda uma única vez após toda a suíte E2E.
- * Limpa o banco de testes para não deixar resíduos.
+ * Remove apenas dados de seed/e2e (createdBy = 'system').
  */
 export default async function globalTeardown(): Promise<void> {
   config();
@@ -15,15 +16,8 @@ export default async function globalTeardown(): Promise<void> {
 
   const prisma = new PrismaClient({ datasources: { db: { url: testUrl } } });
   try {
-    await prisma.cashFlow.deleteMany();
-    await prisma.project.deleteMany();
-    await prisma.budget.deleteMany();
-    await prisma.employee.deleteMany();
-    await prisma.client.deleteMany();
-    await prisma.emailLog.deleteMany();
-    await prisma.users.deleteMany();
-    await prisma.tenants.deleteMany();
-    console.log('\n[e2e] Banco de testes limpo.');
+    await cleanSystemData(prisma);
+    console.log('\n[e2e] Dados de sistema removidos do banco de testes.');
   } finally {
     await prisma.$disconnect();
   }

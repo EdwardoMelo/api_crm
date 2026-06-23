@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma, Project, ProjectStatus } from '@prisma/client';
 
 import { TenantContextService } from '../../../common/tenant';
+import { ActorContextService, auditCreateFields, auditUpdateFields } from '../../../common/audit';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 
@@ -12,13 +13,15 @@ export class ProjectRepository {
     private readonly prisma: PrismaService,
 
     private readonly tenantContext: TenantContextService,
+
+    private readonly actorContext: ActorContextService,
   ) {}
 
   create(data: Omit<Prisma.ProjectCreateInput, 'tenants'>): Promise<Project> {
     return this.prisma.project.create({
       data: {
         ...data,
-
+        ...auditCreateFields(this.actorContext.getActorId()),
         tenants: { connect: { id: this.tenantContext.getTenantId() } },
       },
     });
@@ -39,7 +42,10 @@ export class ProjectRepository {
   }
 
   update(id: number, data: Prisma.ProjectUpdateInput): Promise<Project> {
-    return this.prisma.project.update({ where: { id }, data });
+    return this.prisma.project.update({
+      where: { id },
+      data: { ...data, ...auditUpdateFields(this.actorContext.getActorId()) },
+    });
   }
 
   delete(id: number): Promise<Project> {

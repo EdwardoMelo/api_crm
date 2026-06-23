@@ -3,6 +3,7 @@ import * as bcrypt from 'bcrypt';
 import request from 'supertest';
 import { users_role } from '@prisma/client';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { SYSTEM_ACTOR, auditCreateFields } from '../../src/common/audit';
 
 export const AUTH_FIXTURE = {
   tenantSlug: 'empresa-demo',
@@ -23,6 +24,7 @@ export async function seedAuthUser(prisma: PrismaService): Promise<void> {
       slug: AUTH_FIXTURE.tenantSlug,
       ativo: true,
       updatedAt: now,
+      ...auditCreateFields(SYSTEM_ACTOR),
     },
   });
 
@@ -35,6 +37,7 @@ export async function seedAuthUser(prisma: PrismaService): Promise<void> {
       role: users_role.ADMIN,
       ativo: true,
       updatedAt: now,
+      ...auditCreateFields(SYSTEM_ACTOR),
     },
   });
 }

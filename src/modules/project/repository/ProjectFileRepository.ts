@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { project_files } from '@prisma/client';
+import { ActorContextService, auditCreateFields } from '../../../common/audit';
 import { TenantContextService } from '../../../common/tenant';
 import { PrismaService } from '../../../prisma/prisma.service';
 
@@ -8,12 +9,18 @@ export class ProjectFileRepository {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tenantContext: TenantContextService,
+    private readonly actorContext: ActorContextService,
   ) {}
 
   create(
-    data: Omit<project_files, 'id' | 'createdAt'>,
+    data: Omit<project_files, 'id' | 'createdAt' | 'createdBy' | 'updatedBy'>,
   ): Promise<project_files> {
-    return this.prisma.project_files.create({ data });
+    return this.prisma.project_files.create({
+      data: {
+        ...data,
+        ...auditCreateFields(this.actorContext.getActorId()),
+      },
+    });
   }
 
   findByProjectId(projectId: number): Promise<project_files[]> {

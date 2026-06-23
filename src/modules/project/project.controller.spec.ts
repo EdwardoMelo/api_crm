@@ -20,6 +20,8 @@ const buildProject = (overrides: Partial<Project> = {}): Project =>
     dataFimPrevista: null,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
+    createdBy: 'system',
+    updatedBy: 'system',
     ...overrides,
   }) as Project;
 
@@ -32,6 +34,8 @@ const buildFile = (): project_files => ({
   mimeType: 'application/pdf',
   sizeBytes: 1024,
   createdAt: new Date('2026-01-01'),
+  createdBy: '1',
+  updatedBy: '1',
 });
 
 const buildMulterFile = (): Express.Multer.File =>

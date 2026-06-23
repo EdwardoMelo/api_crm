@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../prisma/prisma.service';
 
 import { mockTenantContextProvider } from '../../common/tenant/tenant-context.mock';
+import { mockActorContextProvider } from '../../common/audit/actor-context.mock';
 
 import { EmployeeRepository } from './repository/EmployeeRepository';
 
@@ -31,6 +32,7 @@ describe('EmployeeRepository', () => {
         EmployeeRepository,
         { provide: PrismaService, useValue: prisma },
         mockTenantContextProvider,
+        mockActorContextProvider,
       ],
     }).compile();
 
@@ -42,7 +44,10 @@ describe('EmployeeRepository', () => {
 
     await repository.update(1, { nome: 'x' });
 
-    expect(prisma.employee.update).toHaveBeenCalledWith({ where: { id: 1 }, data: { nome: 'x' } });
+    expect(prisma.employee.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { nome: 'x', updatedBy: '1' },
+    });
   });
 
   it('findById busca por id e tenant', async () => {

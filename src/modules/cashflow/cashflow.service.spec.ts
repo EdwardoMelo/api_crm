@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CashFlow, CashFlowStatus, CashFlowType } from '@prisma/client';
 import { EntityNotFoundException } from '../../common/exceptions';
+import { FILE_STORAGE } from '../storage/storage.interface';
 import { CashFlowRepository } from './repository/CashFlowRepository';
 import { CashFlowService } from './service/CashFlowService';
 
@@ -17,6 +18,13 @@ const buildCashFlow = (overrides: Partial<CashFlow> = {}): CashFlow =>
     projectId: null,
     clientId: null,
     employeeId: null,
+    notaFiscalFileName: null,
+    notaFiscalStoragePath: null,
+    notaFiscalMimeType: null,
+    notaFiscalSizeBytes: null,
+    tenantId: 1,
+    createdBy: 'system',
+    updatedBy: 'system',
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,
@@ -25,6 +33,12 @@ const buildCashFlow = (overrides: Partial<CashFlow> = {}): CashFlow =>
 describe('CashFlowService', () => {
   let service: CashFlowService;
   let repository: jest.Mocked<CashFlowRepository>;
+
+  const fileStorageMock = {
+    upload: jest.fn(),
+    delete: jest.fn(),
+    getSignedUrl: jest.fn().mockResolvedValue('https://example.com/file'),
+  };
 
   beforeEach(async () => {
     const repositoryMock: Partial<jest.Mocked<CashFlowRepository>> = {
@@ -36,7 +50,11 @@ describe('CashFlowService', () => {
       sumValor: jest.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
-      providers: [CashFlowService, { provide: CashFlowRepository, useValue: repositoryMock }],
+      providers: [
+        CashFlowService,
+        { provide: CashFlowRepository, useValue: repositoryMock },
+        { provide: FILE_STORAGE, useValue: fileStorageMock },
+      ],
     }).compile();
     service = module.get(CashFlowService);
     repository = module.get(CashFlowRepository);

@@ -29,10 +29,12 @@ export class DashboardService {
           this.dashboardRepository.sumCashFlow({
             tipo: CashFlowType.ENTRADA,
             status: CashFlowStatus.PENDENTE,
+            dataCompetencia: competenciaMes,
           }),
           this.dashboardRepository.sumCashFlow({
             tipo: CashFlowType.SAIDA,
             status: CashFlowStatus.PENDENTE,
+            dataCompetencia: competenciaMes,
           }),
           this.dashboardRepository.countClients(),
           this.dashboardRepository.countActiveProjects(),

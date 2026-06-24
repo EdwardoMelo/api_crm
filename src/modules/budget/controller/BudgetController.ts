@@ -9,9 +9,11 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ProjectDTOResponse } from '../../project/dto/response/ProjectDTOResponse';
 import { CreateBudgetDTORequest } from '../dto/request/CreateBudgetDTORequest';
+import { ListBudgetDTOQuery } from '../dto/request/ListBudgetDTOQuery';
 import { UpdateBudgetDTORequest } from '../dto/request/UpdateBudgetDTORequest';
 import { BudgetDTOResponse } from '../dto/response/BudgetDTOResponse';
 import { BudgetService } from '../service/BudgetService';
@@ -26,8 +28,8 @@ export class BudgetController {
   }
 
   @Get()
-  findAll(): Promise<BudgetDTOResponse[]> {
-    return this.budgetService.findAll();
+  findAll(@Query() query: ListBudgetDTOQuery): Promise<BudgetDTOResponse[]> {
+    return this.budgetService.findAll(query);
   }
 
   @Get(':id')

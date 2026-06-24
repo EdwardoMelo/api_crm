@@ -9,12 +9,14 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   CreateFixedIncomeDTORequest,
   RenewFixedIncomeDTORequest,
   UpdateFixedIncomeDTORequest,
 } from '../dto/request/FixedIncomeDTORequest';
+import { ListFixedIncomeDTOQuery } from '../dto/request/ListFixedIncomeDTOQuery';
 import { FixedIncomeDTOResponse } from '../dto/response/FixedIncomeDTOResponse';
 import { CashFlowDTOResponse } from '../dto/response/CashFlowDTOResponse';
 import { FixedIncomeService } from '../service/FixedIncomeService';
@@ -29,8 +31,8 @@ export class FixedIncomeController {
   }
 
   @Get()
-  findAll(): Promise<FixedIncomeDTOResponse[]> {
-    return this.fixedIncomeService.findAll();
+  findAll(@Query() query: ListFixedIncomeDTOQuery): Promise<FixedIncomeDTOResponse[]> {
+    return this.fixedIncomeService.findAll(query);
   }
 
   @Get(':id')

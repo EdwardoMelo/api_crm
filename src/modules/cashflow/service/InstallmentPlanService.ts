@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { CashFlowStatus } from '@prisma/client';
 import { EntityNotFoundException } from '../../../common/exceptions';
 import { CreateInstallmentPlanDTORequest } from '../dto/request/CreateInstallmentPlanDTORequest';
+import { ListInstallmentPlanDTOQuery } from '../dto/request/ListInstallmentPlanDTOQuery';
 import { InstallmentPlanDTOResponse } from '../dto/response/InstallmentPlanDTOResponse';
 import { InstallmentPlanRepository } from '../repository/InstallmentPlanRepository';
 import { CashFlowGenerationService } from './CashFlowGenerationService';
@@ -57,8 +58,8 @@ export class InstallmentPlanService {
     }
   }
 
-  async findAll(): Promise<InstallmentPlanDTOResponse[]> {
-    const plans = await this.installmentPlanRepository.findAll();
+  async findAll(query?: ListInstallmentPlanDTOQuery): Promise<InstallmentPlanDTOResponse[]> {
+    const plans = await this.installmentPlanRepository.findAll(query);
     return InstallmentPlanDTOResponse.fromEntities(plans);
   }
 

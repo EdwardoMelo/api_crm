@@ -9,8 +9,10 @@ import {
   Patch,
   Post,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { CreateClientDTORequest } from '../dto/request/CreateClientDTORequest';
+import { ListClientDTOQuery } from '../dto/request/ListClientDTOQuery';
 import { UpdateClientDTORequest } from '../dto/request/UpdateClientDTORequest';
 import { ClientDTOResponse } from '../dto/response/ClientDTOResponse';
 import { ClientService } from '../service/ClientService';
@@ -25,8 +27,8 @@ export class ClientController {
   }
 
   @Get()
-  findAll(): Promise<ClientDTOResponse[]> {
-    return this.clientService.findAll();
+  findAll(@Query() query: ListClientDTOQuery): Promise<ClientDTOResponse[]> {
+    return this.clientService.findAll(query);
   }
 
   @Get(':id')

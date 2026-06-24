@@ -6,6 +6,7 @@ import {
   FileStorageProvider,
 } from '../../storage/storage.interface';
 import { CreateProjectDTORequest } from '../dto/request/CreateProjectDTORequest';
+import { ListProjectDTOQuery } from '../dto/request/ListProjectDTOQuery';
 import { UpdateProjectDTORequest } from '../dto/request/UpdateProjectDTORequest';
 import { ProjectDTOResponse } from '../dto/response/ProjectDTOResponse';
 import { ProjectFileDTOResponse } from '../dto/response/ProjectFileDTOResponse';
@@ -43,9 +44,9 @@ export class ProjectService {
     }
   }
 
-  async findAll(): Promise<ProjectDTOResponse[]> {
+  async findAll(query?: ListProjectDTOQuery): Promise<ProjectDTOResponse[]> {
     try {
-      const projects = await this.projectRepository.findAll();
+      const projects = await this.projectRepository.findAll(query);
       return ProjectDTOResponse.fromEntities(projects);
     } catch (error) {
       this.logger.error('Erro ao listar projetos', (error as Error).stack);

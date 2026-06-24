@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, tenants_tipo, users_role } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { ListAdminTenantDTOQuery } from '../dto/request/ListAdminTenantDTOQuery';
+import { adminTenantListSort } from '../utils/admin-tenant-sort.utils';
 
 const SYSTEM_ADMIN_ROLE = 'SYSTEM_ADMIN' as users_role;
 
@@ -16,26 +18,47 @@ const businessTenantWhere: Prisma.tenantsWhereInput = {
 export class AdminRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  listTenants() {
-    return this.prisma.tenants.findMany({
-      where: businessTenantWhere,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        nome: true,
-        slug: true,
-        tipo: true,
-        ativo: true,
-        createdAt: true,
-        _count: {
-          select: {
-            users: {
-              where: { role: { not: SYSTEM_ADMIN_ROLE } },
-            },
-            clients: true,
+  listTenants(query?: ListAdminTenantDTOQuery) {
+    const sort = adminTenantListSort.resolve(query);
+    const select = {
+      id: true,
+      nome: true,
+      slug: true,
+      tipo: true,
+      ativo: true,
+      createdAt: true,
+      _count: {
+        select: {
+          users: {
+            where: { role: { not: SYSTEM_ADMIN_ROLE } },
           },
+          clients: true,
         },
       },
+    } as const;
+
+    if (adminTenantListSort.requiresInMemory(sort)) {
+      return this.prisma.tenants
+        .findMany({
+          where: businessTenantWhere,
+          select,
+        })
+        .then((rows) =>
+          adminTenantListSort.sortInMemory(
+            rows.map((row) => ({
+              ...row,
+              totalUsuarios: row._count.users,
+              totalClientes: row._count.clients,
+            })),
+            sort,
+          ),
+        );
+    }
+
+    return this.prisma.tenants.findMany({
+      where: businessTenantWhere,
+      orderBy: adminTenantListSort.buildPrismaOrderBy(sort),
+      select,
     });
   }
 

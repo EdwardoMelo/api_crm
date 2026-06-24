@@ -17,9 +17,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { CreateCashFlowDTORequest } from '../dto/request/CreateCashFlowDTORequest';
 import { ListCashFlowDTOQuery } from '../dto/request/ListCashFlowDTOQuery';
+import { ListCashFlowCategoryDTOQuery } from '../dto/request/ListCashFlowCategoryDTOQuery';
 import { UpdateCashFlowDTORequest } from '../dto/request/UpdateCashFlowDTORequest';
 import { CashFlowDTOResponse } from '../dto/response/CashFlowDTOResponse';
 import { CashFlowListDTOResponse } from '../dto/response/CashFlowListDTOResponse';
+import { CashFlowCategoryListDTOResponse } from '../dto/response/CashFlowCategoryListDTOResponse';
 import { CashFlowService } from '../service/CashFlowService';
 import { MAX_CASH_FLOW_INVOICE_SIZE_BYTES } from '../utils/cash-flow-invoice.utils';
 
@@ -35,6 +37,13 @@ export class CashFlowController {
   @Get()
   findAll(@Query() query: ListCashFlowDTOQuery): Promise<CashFlowListDTOResponse> {
     return this.cashFlowService.findAll(query);
+  }
+
+  @Get('categories')
+  listCategories(
+    @Query() query: ListCashFlowCategoryDTOQuery,
+  ): Promise<CashFlowCategoryListDTOResponse> {
+    return this.cashFlowService.listCategories(query);
   }
 
   @Post(':id(\\d+)/nota-fiscal')

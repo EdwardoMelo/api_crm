@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { AdminDashboardDTOResponse } from '../dto/response/AdminDashboardDTOResponse';
 import { AdminTenantListItemDTOResponse } from '../dto/response/AdminTenantListItemDTOResponse';
+import { ListAdminTenantDTOQuery } from '../dto/request/ListAdminTenantDTOQuery';
 import { AdminRepository } from '../repository/AdminRepository';
 
 @Injectable()
 export class AdminService {
   constructor(private readonly adminRepository: AdminRepository) {}
 
-  async listTenants(): Promise<AdminTenantListItemDTOResponse[]> {
-    const rows = await this.adminRepository.listTenants();
+  async listTenants(query?: ListAdminTenantDTOQuery): Promise<AdminTenantListItemDTOResponse[]> {
+    const rows = await this.adminRepository.listTenants(query);
 
     return rows.map((row) => {
       const dto = new AdminTenantListItemDTOResponse();
@@ -18,8 +19,8 @@ export class AdminService {
       dto.tipo = row.tipo;
       dto.ativo = row.ativo;
       dto.createdAt = row.createdAt;
-      dto.totalUsuarios = row._count.users;
-      dto.totalClientes = row._count.clients;
+      dto.totalUsuarios = 'totalUsuarios' in row ? row.totalUsuarios : row._count.users;
+      dto.totalClientes = 'totalClientes' in row ? row.totalClientes : row._count.clients;
       return dto;
     });
   }

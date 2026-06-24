@@ -9,12 +9,14 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   CreateFixedExpenseDTORequest,
   RenewFixedExpenseDTORequest,
   UpdateFixedExpenseDTORequest,
 } from '../dto/request/FixedExpenseDTORequest';
+import { ListFixedExpenseDTOQuery } from '../dto/request/ListFixedExpenseDTOQuery';
 import { FixedExpenseDTOResponse } from '../dto/response/FixedExpenseDTOResponse';
 import { CashFlowDTOResponse } from '../dto/response/CashFlowDTOResponse';
 import { FixedExpenseService } from '../service/FixedExpenseService';
@@ -29,8 +31,8 @@ export class FixedExpenseController {
   }
 
   @Get()
-  findAll(): Promise<FixedExpenseDTOResponse[]> {
-    return this.fixedExpenseService.findAll();
+  findAll(@Query() query: ListFixedExpenseDTOQuery): Promise<FixedExpenseDTOResponse[]> {
+    return this.fixedExpenseService.findAll(query);
   }
 
   @Get(':id')

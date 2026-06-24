@@ -9,12 +9,14 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { CreateProjectDTORequest } from '../dto/request/CreateProjectDTORequest';
+import { ListProjectDTOQuery } from '../dto/request/ListProjectDTOQuery';
 import { UpdateProjectDTORequest } from '../dto/request/UpdateProjectDTORequest';
 import { ProjectDTOResponse } from '../dto/response/ProjectDTOResponse';
 import { ProjectFileDTOResponse } from '../dto/response/ProjectFileDTOResponse';
@@ -31,8 +33,8 @@ export class ProjectController {
   }
 
   @Get()
-  findAll(): Promise<ProjectDTOResponse[]> {
-    return this.projectService.findAll();
+  findAll(@Query() query: ListProjectDTOQuery): Promise<ProjectDTOResponse[]> {
+    return this.projectService.findAll(query);
   }
 
   @Post(':id/files')

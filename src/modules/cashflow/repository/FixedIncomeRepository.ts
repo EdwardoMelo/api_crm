@@ -3,6 +3,8 @@ import { FixedIncome, Prisma } from '@prisma/client';
 import { TenantContextService } from '../../../common/tenant';
 import { ActorContextService, auditCreateFields, auditUpdateFields } from '../../../common/audit';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { ListFixedIncomeDTOQuery } from '../dto/request/ListFixedIncomeDTOQuery';
+import { fixedIncomeListSort } from '../utils/fixed-income-sort.utils';
 
 @Injectable()
 export class FixedIncomeRepository {
@@ -22,10 +24,11 @@ export class FixedIncomeRepository {
     });
   }
 
-  findAll(): Promise<FixedIncome[]> {
+  findAll(query?: ListFixedIncomeDTOQuery): Promise<FixedIncome[]> {
+    const sort = fixedIncomeListSort.resolve(query);
     return this.prisma.fixedIncome.findMany({
       where: { tenantId: this.tenantContext.getTenantId() },
-      orderBy: { createdAt: 'desc' },
+      orderBy: fixedIncomeListSort.buildPrismaOrderBy(sort),
     });
   }
 

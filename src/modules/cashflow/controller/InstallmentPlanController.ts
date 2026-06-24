@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
 import { CreateInstallmentPlanDTORequest } from '../dto/request/CreateInstallmentPlanDTORequest';
+import { ListInstallmentPlanDTOQuery } from '../dto/request/ListInstallmentPlanDTOQuery';
 import { InstallmentPlanDTOResponse } from '../dto/response/InstallmentPlanDTOResponse';
 import { InstallmentPlanService } from '../service/InstallmentPlanService';
 
@@ -18,8 +19,8 @@ export class InstallmentPlanController {
   }
 
   @Get()
-  findAll(): Promise<InstallmentPlanDTOResponse[]> {
-    return this.installmentPlanService.findAll();
+  findAll(@Query() query: ListInstallmentPlanDTOQuery): Promise<InstallmentPlanDTOResponse[]> {
+    return this.installmentPlanService.findAll(query);
   }
 
   @Get(':id')

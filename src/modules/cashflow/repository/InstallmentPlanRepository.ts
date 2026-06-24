@@ -3,6 +3,8 @@ import { InstallmentPlan, InstallmentPlanItem, Prisma } from '@prisma/client';
 import { TenantContextService } from '../../../common/tenant';
 import { ActorContextService, auditCreateFields, auditUpdateFields } from '../../../common/audit';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { ListInstallmentPlanDTOQuery } from '../dto/request/ListInstallmentPlanDTOQuery';
+import { installmentPlanListSort } from '../utils/installment-plan-sort.utils';
 
 export type InstallmentPlanWithItems = InstallmentPlan & {
   items: InstallmentPlanItem[];
@@ -50,11 +52,12 @@ export class InstallmentPlanRepository {
     });
   }
 
-  findAll(): Promise<InstallmentPlanWithItems[]> {
+  findAll(query?: ListInstallmentPlanDTOQuery): Promise<InstallmentPlanWithItems[]> {
+    const sort = installmentPlanListSort.resolve(query);
     return this.prisma.installmentPlan.findMany({
       where: { tenantId: this.tenantContext.getTenantId() },
       include: { items: { orderBy: { installmentNumber: 'asc' } } },
-      orderBy: { createdAt: 'desc' },
+      orderBy: installmentPlanListSort.buildPrismaOrderBy(sort),
     });
   }
 

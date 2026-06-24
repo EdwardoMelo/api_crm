@@ -11,6 +11,13 @@ import {
   endOfDayFromDateString,
   startOfDayFromDateString,
 } from '../utils/cash-flow-date.utils';
+import { mergeDistinctCategories } from '../utils/category.utils';
+import {
+  buildCashFlowPrismaOrderBy,
+  requiresInMemoryCashFlowSort,
+  resolveCashFlowListSort,
+  sortCashFlows,
+} from '../utils/cash-flow-sort.utils';
 
 export interface CashFlowBalanceSummary {
   saldoAtual: number;
@@ -37,10 +44,18 @@ export class CashFlowRepository {
     });
   }
 
-  findAll(filters?: ListCashFlowDTOQuery): Promise<CashFlow[]> {
+  async findAll(filters?: ListCashFlowDTOQuery): Promise<CashFlow[]> {
+    const sort = resolveCashFlowListSort(filters);
+    const where = this.buildListWhere(filters);
+
+    if (requiresInMemoryCashFlowSort(sort.field)) {
+      const rows = await this.prisma.cashFlow.findMany({ where });
+      return sortCashFlows(rows, sort);
+    }
+
     return this.prisma.cashFlow.findMany({
-      where: this.buildListWhere(filters),
-      orderBy: { dataCompetencia: 'desc' },
+      where,
+      orderBy: buildCashFlowPrismaOrderBy(sort),
     });
   }
 
@@ -90,8 +105,69 @@ export class CashFlowRepository {
         where.dataCompetencia.lte = endOfDayFromDateString(filters.periodEnd);
       }
     }
+    if (filters?.categoria) {
+      where.categoria = filters.categoria;
+    }
 
     return where;
+  }
+
+  async findDistinctCategories(tipo?: CashFlowType): Promise<string[]> {
+    const tenantId = this.tenantContext.getTenantId();
+    const queries: Promise<(string | null)[]>[] = [
+      this.prisma.cashFlow
+        .findMany({
+          where: {
+            tenantId,
+            categoria: { not: null },
+            ...(tipo ? { tipo } : {}),
+          },
+          distinct: ['categoria'],
+          select: { categoria: true },
+        })
+        .then((rows) => rows.map((row) => row.categoria)),
+    ];
+
+    if (!tipo || tipo === CashFlowType.SAIDA) {
+      queries.push(
+        this.prisma.fixedExpense
+          .findMany({
+            where: { tenantId, category: { not: null } },
+            distinct: ['category'],
+            select: { category: true },
+          })
+          .then((rows) => rows.map((row) => row.category)),
+      );
+    }
+
+    if (!tipo || tipo === CashFlowType.ENTRADA) {
+      queries.push(
+        this.prisma.fixedIncome
+          .findMany({
+            where: { tenantId, category: { not: null } },
+            distinct: ['category'],
+            select: { category: true },
+          })
+          .then((rows) => rows.map((row) => row.category)),
+      );
+    }
+
+    queries.push(
+      this.prisma.installmentPlan
+        .findMany({
+          where: {
+            tenantId,
+            category: { not: null },
+            ...(tipo ? { type: tipo } : {}),
+          },
+          distinct: ['category'],
+          select: { category: true },
+        })
+        .then((rows) => rows.map((row) => row.category)),
+    );
+
+    const values = (await Promise.all(queries)).flat();
+    return mergeDistinctCategories(values);
   }
 
   findById(id: number): Promise<CashFlow | null> {

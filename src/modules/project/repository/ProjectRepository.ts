@@ -6,6 +6,8 @@ import { TenantContextService } from '../../../common/tenant';
 import { ActorContextService, auditCreateFields, auditUpdateFields } from '../../../common/audit';
 
 import { PrismaService } from '../../../prisma/prisma.service';
+import { ListProjectDTOQuery } from '../dto/request/ListProjectDTOQuery';
+import { projectListSort } from '../utils/project-sort.utils';
 
 @Injectable()
 export class ProjectRepository {
@@ -27,11 +29,11 @@ export class ProjectRepository {
     });
   }
 
-  findAll(): Promise<Project[]> {
+  findAll(query?: ListProjectDTOQuery): Promise<Project[]> {
+    const sort = projectListSort.resolve(query);
     return this.prisma.project.findMany({
       where: { tenantId: this.tenantContext.getTenantId() },
-
-      orderBy: { createdAt: 'desc' },
+      orderBy: projectListSort.buildPrismaOrderBy(sort),
     });
   }
 

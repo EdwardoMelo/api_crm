@@ -6,6 +6,8 @@ import { TenantContextService } from '../../../common/tenant';
 import { ActorContextService, auditCreateFields, auditUpdateFields } from '../../../common/audit';
 
 import { PrismaService } from '../../../prisma/prisma.service';
+import { ListBudgetDTOQuery } from '../dto/request/ListBudgetDTOQuery';
+import { budgetListSort } from '../utils/budget-sort.utils';
 
 @Injectable()
 export class BudgetRepository {
@@ -27,11 +29,11 @@ export class BudgetRepository {
     });
   }
 
-  findAll(): Promise<Budget[]> {
+  findAll(query?: ListBudgetDTOQuery): Promise<Budget[]> {
+    const sort = budgetListSort.resolve(query);
     return this.prisma.budget.findMany({
       where: { tenantId: this.tenantContext.getTenantId() },
-
-      orderBy: { createdAt: 'desc' },
+      orderBy: budgetListSort.buildPrismaOrderBy(sort),
     });
   }
 

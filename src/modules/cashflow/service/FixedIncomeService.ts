@@ -8,6 +8,7 @@ import {
   RenewFixedIncomeDTORequest,
   UpdateFixedIncomeDTORequest,
 } from '../dto/request/FixedIncomeDTORequest';
+import { ListFixedIncomeDTOQuery } from '../dto/request/ListFixedIncomeDTOQuery';
 import { FixedIncomeDTOResponse } from '../dto/response/FixedIncomeDTOResponse';
 import { CashFlowDTOResponse } from '../dto/response/CashFlowDTOResponse';
 import { CashFlowRepository } from '../repository/CashFlowRepository';
@@ -51,8 +52,8 @@ export class FixedIncomeService {
     }
   }
 
-  async findAll(): Promise<FixedIncomeDTOResponse[]> {
-    const items = await this.fixedIncomeRepository.findAll();
+  async findAll(query?: ListFixedIncomeDTOQuery): Promise<FixedIncomeDTOResponse[]> {
+    const items = await this.fixedIncomeRepository.findAll(query);
     return FixedIncomeDTOResponse.fromEntities(items);
   }
 

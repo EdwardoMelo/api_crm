@@ -9,8 +9,10 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { CreateEmployeeDTORequest } from '../dto/request/CreateEmployeeDTORequest';
+import { ListEmployeeDTOQuery } from '../dto/request/ListEmployeeDTOQuery';
 import { UpdateEmployeeDTORequest } from '../dto/request/UpdateEmployeeDTORequest';
 import { EmployeeDTOResponse } from '../dto/response/EmployeeDTOResponse';
 import { EmployeeService } from '../service/EmployeeService';
@@ -25,8 +27,8 @@ export class EmployeeController {
   }
 
   @Get()
-  findAll(): Promise<EmployeeDTOResponse[]> {
-    return this.employeeService.findAll();
+  findAll(@Query() query: ListEmployeeDTOQuery): Promise<EmployeeDTOResponse[]> {
+    return this.employeeService.findAll(query);
   }
 
   @Get(':id')

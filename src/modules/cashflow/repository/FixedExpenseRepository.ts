@@ -3,6 +3,8 @@ import { FixedExpense, Prisma } from '@prisma/client';
 import { TenantContextService } from '../../../common/tenant';
 import { ActorContextService, auditCreateFields, auditUpdateFields } from '../../../common/audit';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { ListFixedExpenseDTOQuery } from '../dto/request/ListFixedExpenseDTOQuery';
+import { fixedExpenseListSort } from '../utils/fixed-expense-sort.utils';
 
 @Injectable()
 export class FixedExpenseRepository {
@@ -22,10 +24,11 @@ export class FixedExpenseRepository {
     });
   }
 
-  findAll(): Promise<FixedExpense[]> {
+  findAll(query?: ListFixedExpenseDTOQuery): Promise<FixedExpense[]> {
+    const sort = fixedExpenseListSort.resolve(query);
     return this.prisma.fixedExpense.findMany({
       where: { tenantId: this.tenantContext.getTenantId() },
-      orderBy: { createdAt: 'desc' },
+      orderBy: fixedExpenseListSort.buildPrismaOrderBy(sort),
     });
   }
 

@@ -8,6 +8,7 @@ import {
   RenewFixedExpenseDTORequest,
   UpdateFixedExpenseDTORequest,
 } from '../dto/request/FixedExpenseDTORequest';
+import { ListFixedExpenseDTOQuery } from '../dto/request/ListFixedExpenseDTOQuery';
 import { FixedExpenseDTOResponse } from '../dto/response/FixedExpenseDTOResponse';
 import { CashFlowDTOResponse } from '../dto/response/CashFlowDTOResponse';
 import { CashFlowRepository } from '../repository/CashFlowRepository';
@@ -50,8 +51,8 @@ export class FixedExpenseService {
     }
   }
 
-  async findAll(): Promise<FixedExpenseDTOResponse[]> {
-    const items = await this.fixedExpenseRepository.findAll();
+  async findAll(query?: ListFixedExpenseDTOQuery): Promise<FixedExpenseDTOResponse[]> {
+    const items = await this.fixedExpenseRepository.findAll(query);
     return FixedExpenseDTOResponse.fromEntities(items);
   }
 

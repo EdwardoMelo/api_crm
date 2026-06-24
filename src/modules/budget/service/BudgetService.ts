@@ -4,6 +4,7 @@ import { BusinessRuleException, EntityNotFoundException } from '../../../common/
 import { ProjectDTOResponse } from '../../project/dto/response/ProjectDTOResponse';
 import { ProjectService } from '../../project/service/ProjectService';
 import { CreateBudgetDTORequest } from '../dto/request/CreateBudgetDTORequest';
+import { ListBudgetDTOQuery } from '../dto/request/ListBudgetDTOQuery';
 import { UpdateBudgetDTORequest } from '../dto/request/UpdateBudgetDTORequest';
 import { BudgetDTOResponse } from '../dto/response/BudgetDTOResponse';
 import { BudgetRepository } from '../repository/BudgetRepository';
@@ -35,9 +36,9 @@ export class BudgetService {
     }
   }
 
-  async findAll(): Promise<BudgetDTOResponse[]> {
+  async findAll(query?: ListBudgetDTOQuery): Promise<BudgetDTOResponse[]> {
     try {
-      const budgets = await this.budgetRepository.findAll();
+      const budgets = await this.budgetRepository.findAll(query);
       return BudgetDTOResponse.fromEntities(budgets);
     } catch (error) {
       this.logger.error('Erro ao listar orçamentos', (error as Error).stack);

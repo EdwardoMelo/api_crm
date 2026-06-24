@@ -7,6 +7,8 @@ import { ActorContextService, auditCreateFields, auditUpdateFields } from '../..
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ClientWithMetrics } from '../types/client-with-metrics.type';
+import { ListClientDTOQuery } from '../dto/request/ListClientDTOQuery';
+import { clientListSort } from '../utils/client-sort.utils';
 
 /**
 
@@ -36,8 +38,8 @@ export class ClientRepository {
     });
   }
 
-  findAll(): Promise<ClientWithMetrics[]> {
-    return this.findAllWithMetrics();
+  findAll(query?: ListClientDTOQuery): Promise<ClientWithMetrics[]> {
+    return this.findAllWithMetrics(query);
   }
 
   async findById(id: number): Promise<ClientWithMetrics | null> {
@@ -54,12 +56,15 @@ export class ClientRepository {
     return { ...client, valorOrcado, valorVendido };
   }
 
-  private async findAllWithMetrics(): Promise<ClientWithMetrics[]> {
+  private async findAllWithMetrics(query?: ListClientDTOQuery): Promise<ClientWithMetrics[]> {
+    const sort = clientListSort.resolve(query);
     const tenantId = this.tenantContext.getTenantId();
     const [clients, budgetAgg, projectAgg] = await Promise.all([
       this.prisma.client.findMany({
         where: { tenantId },
-        orderBy: { createdAt: 'desc' },
+        orderBy: clientListSort.requiresInMemory(sort)
+          ? { createdAt: 'desc' }
+          : clientListSort.buildPrismaOrderBy(sort),
       }),
       this.prisma.budget.groupBy({
         by: ['clienteId'],
@@ -85,11 +90,15 @@ export class ClientRepository {
       projectAgg.map((row) => [row.clienteId, Number(row._sum.valorTotal ?? 0)]),
     );
 
-    return clients.map((client) => ({
+    const rows = clients.map((client) => ({
       ...client,
       valorOrcado: budgetMap.get(client.id) ?? 0,
       valorVendido: projectMap.get(client.id) ?? 0,
     }));
+
+    return clientListSort.requiresInMemory(sort)
+      ? clientListSort.sortInMemory(rows, sort)
+      : rows;
   }
 
   private sumBudgetedForClient(clienteId: number): Promise<number> {

@@ -5,6 +5,7 @@ import { UpdateClientDTORequest } from '../dto/request/UpdateClientDTORequest';
 import { ClientDTOResponse } from '../dto/response/ClientDTOResponse';
 import { ClientRepository } from '../repository/ClientRepository';
 import { ClientWithMetrics } from '../types/client-with-metrics.type';
+import { ListClientDTOQuery } from '../dto/request/ListClientDTOQuery';
 
 @Injectable()
 export class ClientService {
@@ -29,9 +30,9 @@ export class ClientService {
     }
   }
 
-  async findAll(): Promise<ClientDTOResponse[]> {
+  async findAll(query?: ListClientDTOQuery): Promise<ClientDTOResponse[]> {
     try {
-      const clients = await this.clientRepository.findAll();
+      const clients = await this.clientRepository.findAll(query);
       return ClientDTOResponse.fromEntities(clients);
     } catch (error) {
       this.logger.error('Erro ao listar clientes', (error as Error).stack);

@@ -6,6 +6,8 @@ import { TenantContextService } from '../../../common/tenant';
 import { ActorContextService, auditCreateFields, auditUpdateFields } from '../../../common/audit';
 
 import { PrismaService } from '../../../prisma/prisma.service';
+import { ListEmployeeDTOQuery } from '../dto/request/ListEmployeeDTOQuery';
+import { employeeListSort } from '../utils/employee-sort.utils';
 
 @Injectable()
 export class EmployeeRepository {
@@ -27,11 +29,11 @@ export class EmployeeRepository {
     });
   }
 
-  findAll(): Promise<Employee[]> {
+  findAll(query?: ListEmployeeDTOQuery): Promise<Employee[]> {
+    const sort = employeeListSort.resolve(query);
     return this.prisma.employee.findMany({
       where: { tenantId: this.tenantContext.getTenantId() },
-
-      orderBy: { createdAt: 'desc' },
+      orderBy: employeeListSort.buildPrismaOrderBy(sort),
     });
   }
 

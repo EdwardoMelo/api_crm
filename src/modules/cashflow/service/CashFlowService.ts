@@ -7,9 +7,11 @@ import {
 } from '../../storage/storage.interface';
 import { CreateCashFlowDTORequest } from '../dto/request/CreateCashFlowDTORequest';
 import { ListCashFlowDTOQuery } from '../dto/request/ListCashFlowDTOQuery';
+import { ListCashFlowCategoryDTOQuery } from '../dto/request/ListCashFlowCategoryDTOQuery';
 import { UpdateCashFlowDTORequest } from '../dto/request/UpdateCashFlowDTORequest';
 import { CashFlowDTOResponse } from '../dto/response/CashFlowDTOResponse';
 import { CashFlowListDTOResponse } from '../dto/response/CashFlowListDTOResponse';
+import { CashFlowCategoryListDTOResponse } from '../dto/response/CashFlowCategoryListDTOResponse';
 import { CashFlowNotaFiscalDTOResponse } from '../dto/response/CashFlowNotaFiscalDTOResponse';
 import { CashFlowRepository } from '../repository/CashFlowRepository';
 import { InstallmentPlanRepository } from '../repository/InstallmentPlanRepository';
@@ -60,6 +62,16 @@ export class CashFlowService {
       return { items, summary };
     } catch (error) {
       this.logger.error('Erro ao listar fluxo de caixa', (error as Error).stack);
+      throw error;
+    }
+  }
+
+  async listCategories(query?: ListCashFlowCategoryDTOQuery): Promise<CashFlowCategoryListDTOResponse> {
+    try {
+      const categories = await this.cashFlowRepository.findDistinctCategories(query?.tipo);
+      return { categories };
+    } catch (error) {
+      this.logger.error('Erro ao listar categorias de fluxo de caixa', (error as Error).stack);
       throw error;
     }
   }

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Employee } from '@prisma/client';
 import { EntityNotFoundException } from '../../../common/exceptions';
 import { CreateEmployeeDTORequest } from '../dto/request/CreateEmployeeDTORequest';
+import { ListEmployeeDTOQuery } from '../dto/request/ListEmployeeDTOQuery';
 import { UpdateEmployeeDTORequest } from '../dto/request/UpdateEmployeeDTORequest';
 import { EmployeeDTOResponse } from '../dto/response/EmployeeDTOResponse';
 import { EmployeeRepository } from '../repository/EmployeeRepository';
@@ -30,9 +31,9 @@ export class EmployeeService {
     }
   }
 
-  async findAll(): Promise<EmployeeDTOResponse[]> {
+  async findAll(query?: ListEmployeeDTOQuery): Promise<EmployeeDTOResponse[]> {
     try {
-      const employees = await this.employeeRepository.findAll();
+      const employees = await this.employeeRepository.findAll(query);
       return EmployeeDTOResponse.fromEntities(employees);
     } catch (error) {
       this.logger.error('Erro ao listar funcionários', (error as Error).stack);

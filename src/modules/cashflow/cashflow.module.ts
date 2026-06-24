@@ -17,10 +17,10 @@ import { InstallmentPlanService } from './service/InstallmentPlanService';
 @Module({
   imports: [StorageModule],
   controllers: [
-    CashFlowController,
     FixedExpenseController,
     FixedIncomeController,
     InstallmentPlanController,
+    CashFlowController,
   ],
   providers: [
     CashFlowService,

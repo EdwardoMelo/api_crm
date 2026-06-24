@@ -9,14 +9,17 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { CreateCashFlowDTORequest } from '../dto/request/CreateCashFlowDTORequest';
+import { ListCashFlowDTOQuery } from '../dto/request/ListCashFlowDTOQuery';
 import { UpdateCashFlowDTORequest } from '../dto/request/UpdateCashFlowDTORequest';
 import { CashFlowDTOResponse } from '../dto/response/CashFlowDTOResponse';
+import { CashFlowListDTOResponse } from '../dto/response/CashFlowListDTOResponse';
 import { CashFlowService } from '../service/CashFlowService';
 import { MAX_CASH_FLOW_INVOICE_SIZE_BYTES } from '../utils/cash-flow-invoice.utils';
 
@@ -30,11 +33,11 @@ export class CashFlowController {
   }
 
   @Get()
-  findAll(): Promise<CashFlowDTOResponse[]> {
-    return this.cashFlowService.findAll();
+  findAll(@Query() query: ListCashFlowDTOQuery): Promise<CashFlowListDTOResponse> {
+    return this.cashFlowService.findAll(query);
   }
 
-  @Post(':id/nota-fiscal')
+  @Post(':id(\\d+)/nota-fiscal')
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
@@ -48,18 +51,18 @@ export class CashFlowController {
     return this.cashFlowService.uploadNotaFiscal(id, file);
   }
 
-  @Delete(':id/nota-fiscal')
+  @Delete(':id(\\d+)/nota-fiscal')
   @HttpCode(HttpStatus.NO_CONTENT)
   removeNotaFiscal(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.cashFlowService.removeNotaFiscal(id);
   }
 
-  @Get(':id')
+  @Get(':id(\\d+)')
   findById(@Param('id', ParseIntPipe) id: number): Promise<CashFlowDTOResponse> {
     return this.cashFlowService.findById(id);
   }
 
-  @Patch(':id')
+  @Patch(':id(\\d+)')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCashFlowDTORequest,
@@ -67,7 +70,7 @@ export class CashFlowController {
     return this.cashFlowService.update(id, dto);
   }
 
-  @Delete(':id')
+  @Delete(':id(\\d+)')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.cashFlowService.remove(id);

@@ -85,7 +85,7 @@ describe('CashFlow (e2e)', () => {
       .set(bearer(token))
       .expect(200);
 
-    expect(list.body).toHaveLength(2);
+    expect(list.body.items).toHaveLength(2);
   });
 
   it('CRUD - atualiza e remove lançamento', async () => {

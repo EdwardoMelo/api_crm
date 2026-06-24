@@ -268,7 +268,7 @@ describe('CashFlow submodules (e2e)', () => {
         .set(bearer(token))
         .expect(200);
 
-      const installmentFlows = allCashFlows.body.filter(
+      const installmentFlows = allCashFlows.body.items.filter(
         (cf: { sourceType: string }) => cf.sourceType === 'INSTALLMENT',
       );
 
@@ -310,13 +310,82 @@ describe('CashFlow submodules (e2e)', () => {
         .set(bearer(token))
         .expect(200);
 
-      const installmentFlows = allCashFlows.body.filter(
+      const installmentFlows = allCashFlows.body.items.filter(
         (cf: { sourceType: string }) => cf.sourceType === 'INSTALLMENT',
       );
 
       expect(
         installmentFlows.every((cf: { status: string }) => cf.status === 'CANCELADO'),
       ).toBe(true);
+    });
+
+    it('cancela parcelamento mantendo parcelas já pagas', async () => {
+      const created = await request(app.getHttpServer())
+        .post('/api/cashflow/installments')
+        .set(bearer(token))
+        .send({
+          description: 'Compra com entrada',
+          type: 'SAIDA',
+          totalAmount: 300,
+          installmentCount: 3,
+          firstDueDate: '2026-07-01',
+        })
+        .expect(201);
+
+      const allCashFlows = await request(app.getHttpServer())
+        .get('/api/cashflow')
+        .set(bearer(token))
+        .expect(200);
+
+      const installmentFlows = allCashFlows.body.items.filter(
+        (cf: { sourceType: string }) => cf.sourceType === 'INSTALLMENT',
+      );
+
+      const firstItem = created.body.items[0];
+      const paidFlow = installmentFlows.find(
+        (cf: { installmentPlanItemId: number }) => cf.installmentPlanItemId === firstItem.id,
+      );
+
+      await request(app.getHttpServer())
+        .patch(`/api/cashflow/${paidFlow.id}`)
+        .set(bearer(token))
+        .send({
+          status: 'PAGO',
+          dataPagamento: '2026-07-01T00:00:00.000Z',
+        })
+        .expect(200);
+
+      const cancelled = await request(app.getHttpServer())
+        .post(`/api/cashflow/installments/${created.body.id}/cancel`)
+        .set(bearer(token))
+        .expect(201);
+
+      expect(cancelled.body.status).toBe('CANCELLED');
+
+      const paidItem = cancelled.body.items.find(
+        (item: { id: number }) => item.id === firstItem.id,
+      );
+      const pendingItem = cancelled.body.items.find(
+        (item: { id: number; status: string }) =>
+          item.id !== firstItem.id && item.status === 'CANCELADO',
+      );
+
+      expect(paidItem.status).toBe('PAGO');
+      expect(pendingItem.status).toBe('CANCELADO');
+
+      const flowsAfterCancel = await request(app.getHttpServer())
+        .get('/api/cashflow')
+        .set(bearer(token))
+        .expect(200);
+
+      const relatedFlows = flowsAfterCancel.body.items.filter(
+        (cf: { sourceType: string }) => cf.sourceType === 'INSTALLMENT',
+      );
+
+      expect(relatedFlows.filter((cf: { status: string }) => cf.status === 'PAGO')).toHaveLength(1);
+      expect(
+        relatedFlows.filter((cf: { status: string }) => cf.status === 'CANCELADO'),
+      ).toHaveLength(2);
     });
   });
 });

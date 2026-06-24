@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CashFlowStatus } from '@prisma/client';
-import { BusinessRuleException } from '../../../common/exceptions';
 import { EntityNotFoundException } from '../../../common/exceptions';
 import { CreateInstallmentPlanDTORequest } from '../dto/request/CreateInstallmentPlanDTORequest';
 import { InstallmentPlanDTOResponse } from '../dto/response/InstallmentPlanDTOResponse';
@@ -73,25 +72,16 @@ export class InstallmentPlanService {
 
     for (const item of plan.items) {
       if (item.status === CashFlowStatus.PAGO) {
-        throw new BusinessRuleException(
-          'Não é possível cancelar parcelamento com parcelas já pagas.',
-        );
+        continue;
       }
+
       await this.installmentPlanRepository.updateItem(item.id, {
         status: CashFlowStatus.CANCELADO,
       });
-    }
 
-    const cashFlows = await this.cashFlowRepository.findAll();
-    const related = cashFlows.filter(
-      (cf) =>
-        cf.installmentPlanItemId != null &&
-        plan.items.some((item) => item.id === cf.installmentPlanItemId),
-    );
-
-    for (const cf of related) {
-      if (cf.status === CashFlowStatus.PENDENTE) {
-        await this.cashFlowRepository.update(cf.id, { status: CashFlowStatus.CANCELADO });
+      const cashFlow = await this.cashFlowRepository.findByInstallmentPlanItemId(item.id);
+      if (cashFlow?.status === CashFlowStatus.PENDENTE) {
+        await this.cashFlowRepository.update(cashFlow.id, { status: CashFlowStatus.CANCELADO });
       }
     }
 

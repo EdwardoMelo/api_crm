@@ -3,6 +3,7 @@ import { CashFlow, CashFlowStatus, CashFlowType } from '@prisma/client';
 import { EntityNotFoundException } from '../../common/exceptions';
 import { FILE_STORAGE } from '../storage/storage.interface';
 import { CashFlowRepository } from './repository/CashFlowRepository';
+import { InstallmentPlanRepository } from './repository/InstallmentPlanRepository';
 import { CashFlowService } from './service/CashFlowService';
 
 const buildCashFlow = (overrides: Partial<CashFlow> = {}): CashFlow =>
@@ -37,6 +38,7 @@ const buildCashFlow = (overrides: Partial<CashFlow> = {}): CashFlow =>
 describe('CashFlowService', () => {
   let service: CashFlowService;
   let repository: jest.Mocked<CashFlowRepository>;
+  let installmentPlanRepository: jest.Mocked<InstallmentPlanRepository>;
 
   const fileStorageMock = {
     upload: jest.fn(),
@@ -53,15 +55,21 @@ describe('CashFlowService', () => {
       delete: jest.fn(),
       sumValor: jest.fn(),
     };
+    const installmentPlanRepositoryMock: Partial<jest.Mocked<InstallmentPlanRepository>> = {
+      findItemById: jest.fn(),
+      updateItem: jest.fn(),
+    };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CashFlowService,
         { provide: CashFlowRepository, useValue: repositoryMock },
+        { provide: InstallmentPlanRepository, useValue: installmentPlanRepositoryMock },
         { provide: FILE_STORAGE, useValue: fileStorageMock },
       ],
     }).compile();
     service = module.get(CashFlowService);
     repository = module.get(CashFlowRepository);
+    installmentPlanRepository = module.get(InstallmentPlanRepository);
   });
 
   it('permite lançamento futuro (sem dataPagamento)', async () => {
@@ -94,5 +102,36 @@ describe('CashFlowService', () => {
   it('findById lança quando não existe', async () => {
     repository.findById.mockResolvedValue(null);
     await expect(service.findById(999)).rejects.toBeInstanceOf(EntityNotFoundException);
+  });
+
+  it('sincroniza installment item ao marcar cash flow de parcela como pago', async () => {
+    const paymentDate = new Date('2026-06-15');
+    repository.findById.mockResolvedValue(
+      buildCashFlow({ installmentPlanItemId: 10, status: CashFlowStatus.PENDENTE }),
+    );
+    repository.update.mockResolvedValue(
+      buildCashFlow({
+        installmentPlanItemId: 10,
+        status: CashFlowStatus.PAGO,
+        dataPagamento: paymentDate,
+      }),
+    );
+    installmentPlanRepository.findItemById.mockResolvedValue({
+      id: 10,
+      status: CashFlowStatus.PENDENTE,
+    } as never);
+
+    await service.update(1, {
+      status: CashFlowStatus.PAGO,
+      dataPagamento: paymentDate.toISOString(),
+    });
+
+    expect(installmentPlanRepository.updateItem).toHaveBeenCalledWith(
+      10,
+      expect.objectContaining({
+        status: CashFlowStatus.PAGO,
+        paidAt: paymentDate,
+      }),
+    );
   });
 });

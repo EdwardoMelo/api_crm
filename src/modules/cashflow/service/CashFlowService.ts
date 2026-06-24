@@ -1,15 +1,18 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { CashFlow, Prisma } from '@prisma/client';
+import { CashFlow, CashFlowStatus, Prisma } from '@prisma/client';
 import { EntityNotFoundException } from '../../../common/exceptions';
 import {
   FILE_STORAGE,
   FileStorageProvider,
 } from '../../storage/storage.interface';
 import { CreateCashFlowDTORequest } from '../dto/request/CreateCashFlowDTORequest';
+import { ListCashFlowDTOQuery } from '../dto/request/ListCashFlowDTOQuery';
 import { UpdateCashFlowDTORequest } from '../dto/request/UpdateCashFlowDTORequest';
 import { CashFlowDTOResponse } from '../dto/response/CashFlowDTOResponse';
+import { CashFlowListDTOResponse } from '../dto/response/CashFlowListDTOResponse';
 import { CashFlowNotaFiscalDTOResponse } from '../dto/response/CashFlowNotaFiscalDTOResponse';
 import { CashFlowRepository } from '../repository/CashFlowRepository';
+import { InstallmentPlanRepository } from '../repository/InstallmentPlanRepository';
 import {
   buildCashFlowInvoiceStoragePath,
   validateCashFlowInvoiceFile,
@@ -21,6 +24,7 @@ export class CashFlowService {
 
   constructor(
     private readonly cashFlowRepository: CashFlowRepository,
+    private readonly installmentPlanRepository: InstallmentPlanRepository,
     @Inject(FILE_STORAGE) private readonly fileStorage: FileStorageProvider,
   ) {}
 
@@ -46,10 +50,14 @@ export class CashFlowService {
     }
   }
 
-  async findAll(): Promise<CashFlowDTOResponse[]> {
+  async findAll(query?: ListCashFlowDTOQuery): Promise<CashFlowListDTOResponse> {
     try {
-      const cashFlows = await this.cashFlowRepository.findAll();
-      return Promise.all(cashFlows.map((cashFlow) => this.toResponse(cashFlow)));
+      const [cashFlows, summary] = await Promise.all([
+        this.cashFlowRepository.findAll(query),
+        this.cashFlowRepository.computeBalanceSummary(query),
+      ]);
+      const items = await Promise.all(cashFlows.map((cashFlow) => this.toResponse(cashFlow)));
+      return { items, summary };
     } catch (error) {
       this.logger.error('Erro ao listar fluxo de caixa', (error as Error).stack);
       throw error;
@@ -62,7 +70,7 @@ export class CashFlowService {
   }
 
   async update(id: number, dto: UpdateCashFlowDTORequest): Promise<CashFlowDTOResponse> {
-    await this.getExistingCashFlow(id);
+    const existing = await this.getExistingCashFlow(id);
     try {
       const data: Prisma.CashFlowUpdateInput = {
         descricao: dto.descricao,
@@ -77,6 +85,15 @@ export class CashFlowService {
         employee: dto.employeeId ? { connect: { id: dto.employeeId } } : undefined,
       };
       const cashFlow = await this.cashFlowRepository.update(id, data);
+
+      if (existing.installmentPlanItemId && dto.status) {
+        await this.syncInstallmentItemFromCashFlow(
+          existing.installmentPlanItemId,
+          dto.status,
+          dto.dataPagamento ? new Date(dto.dataPagamento) : cashFlow.dataPagamento,
+        );
+      }
+
       return this.toResponse(cashFlow);
     } catch (error) {
       this.logger.error(`Erro ao atualizar lançamento ${id}`, (error as Error).stack);
@@ -172,6 +189,26 @@ export class CashFlowService {
       dto.notaFiscal = notaFiscal;
     }
     return dto;
+  }
+
+  private async syncInstallmentItemFromCashFlow(
+    installmentPlanItemId: number,
+    status: CashFlowStatus,
+    dataPagamento?: Date | null,
+  ): Promise<void> {
+    const item = await this.installmentPlanRepository.findItemById(installmentPlanItemId);
+    if (!item) {
+      return;
+    }
+
+    const itemData: Prisma.InstallmentPlanItemUpdateInput = { status };
+    if (status === CashFlowStatus.PAGO) {
+      itemData.paidAt = dataPagamento ?? new Date();
+    } else if (status === CashFlowStatus.PENDENTE) {
+      itemData.paidAt = null;
+    }
+
+    await this.installmentPlanRepository.updateItem(installmentPlanItemId, itemData);
   }
 
   private async getExistingCashFlow(id: number): Promise<CashFlow> {

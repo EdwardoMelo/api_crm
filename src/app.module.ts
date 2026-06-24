@@ -13,6 +13,7 @@ import { EmailModule } from './modules/email/email.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { TenantFiscalModule } from './modules/tenant-fiscal/tenant-fiscal.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { TenantFiscalModule } from './modules/tenant-fiscal/tenant-fiscal.module
     DashboardModule,
     StorageModule,
     TenantFiscalModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

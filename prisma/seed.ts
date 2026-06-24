@@ -13,7 +13,7 @@ import {
 
 import { resolveDatabaseUrl } from '../src/prisma/database-url';
 import { cleanSystemData } from '../src/prisma/clean-system-data';
-import { SYSTEM_ACTOR, auditCreateFields } from '../src/common/audit';
+import { SYSTEM_ACTOR, PLATFORM_ACTOR, auditCreateFields } from '../src/common/audit';
 
 config();
 
@@ -50,12 +50,55 @@ async function main(): Promise<void> {
 
   console.log(`🌱 Iniciando seed no banco de ${target}...`);
 
+  const platformAudit = auditCreateFields(PLATFORM_ACTOR);
+  const platformPasswordHash = await bcrypt.hash('admin123', 10);
+  const now = new Date();
+
+  // Tenant plataforma + admin de sistema (persistente; não removido pelo cleanSystemData)
+  const platformTenant = await prisma.tenants.upsert({
+    where: { slug: 'plataforma' },
+    create: {
+      nome: 'Plataforma',
+      slug: 'plataforma',
+      ativo: true,
+      updatedAt: now,
+      ...platformAudit,
+    },
+    update: {
+      nome: 'Plataforma',
+      ativo: true,
+      updatedAt: now,
+      updatedBy: PLATFORM_ACTOR,
+    },
+  });
+
+  await prisma.users.upsert({
+    where: { email: 'admin@plataforma.com' },
+    create: {
+      tenantId: platformTenant.id,
+      nome: 'Admin Plataforma',
+      email: 'admin@plataforma.com',
+      passwordHash: platformPasswordHash,
+      role: users_role.SYSTEM_ADMIN,
+      ativo: true,
+      updatedAt: now,
+      ...platformAudit,
+    },
+    update: {
+      tenantId: platformTenant.id,
+      nome: 'Admin Plataforma',
+      passwordHash: platformPasswordHash,
+      role: users_role.SYSTEM_ADMIN,
+      ativo: true,
+      updatedAt: now,
+      updatedBy: PLATFORM_ACTOR,
+    },
+  });
+
   const systemAudit = auditCreateFields(SYSTEM_ACTOR);
 
   // Remove apenas dados de seed/e2e anteriores (createdBy = 'system')
   await cleanSystemData(prisma);
-
-  const now = new Date();
 
   // ── Tenant e usuário admin ────────────────────────────────
 

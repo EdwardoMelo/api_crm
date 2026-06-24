@@ -300,11 +300,6 @@ enum EmailStatus {
   FALHA
 }
 
-enum users_role {
-  ADMIN
-  USUARIO
-}
-
 enum tenant_fiscal_info_regimeTributario {
   SIMPLES_NACIONAL
   LUCRO_PRESUMIDO
@@ -315,4 +310,10 @@ enum tenant_fiscal_info_regimeTributario {
 enum tenants_tipo {
   PESSOA_FISICA
   EMPRESA
+}
+
+enum users_role {
+  ADMIN
+  USUARIO
+  SYSTEM_ADMIN
 }

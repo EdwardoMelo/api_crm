@@ -1,27 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { budget_email_templates } from '@prisma/client';
+import { email_templates } from '@prisma/client';
 import { ActorContextService, auditCreateFields, auditUpdateFields } from '../../../common/audit';
 import { TenantContextService } from '../../../common/tenant';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { BudgetEmailVariableKey } from '../constants/budget-email-variables.constants';
+import { EmailTemplateVariableKey } from '../constants/email-template-variables.constants';
 
 @Injectable()
-export class BudgetEmailTemplateRepository {
+export class EmailTemplateRepository {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tenantContext: TenantContextService,
     private readonly actorContext: ActorContextService,
   ) {}
 
-  findAll(): Promise<budget_email_templates[]> {
-    return this.prisma.budget_email_templates.findMany({
+  findAll(): Promise<email_templates[]> {
+    return this.prisma.email_templates.findMany({
       where: { tenantId: this.tenantContext.getTenantId() },
       orderBy: { updatedAt: 'desc' },
     });
   }
 
-  findById(id: number): Promise<budget_email_templates | null> {
-    return this.prisma.budget_email_templates.findFirst({
+  findById(id: number): Promise<email_templates | null> {
+    return this.prisma.email_templates.findFirst({
       where: {
         id,
         tenantId: this.tenantContext.getTenantId(),
@@ -33,9 +33,9 @@ export class BudgetEmailTemplateRepository {
     nome: string;
     assunto: string;
     corpo: string;
-    variaveis: BudgetEmailVariableKey[];
-  }): Promise<budget_email_templates> {
-    return this.prisma.budget_email_templates.create({
+    variaveis: EmailTemplateVariableKey[];
+  }): Promise<email_templates> {
+    return this.prisma.email_templates.create({
       data: {
         nome: data.nome,
         assunto: data.assunto,
@@ -54,10 +54,10 @@ export class BudgetEmailTemplateRepository {
       nome: string;
       assunto: string;
       corpo: string;
-      variaveis: BudgetEmailVariableKey[];
+      variaveis: EmailTemplateVariableKey[];
     }>,
-  ): Promise<budget_email_templates> {
-    return this.prisma.budget_email_templates.update({
+  ): Promise<email_templates> {
+    return this.prisma.email_templates.update({
       where: { id },
       data: {
         nome: data.nome,
@@ -69,7 +69,7 @@ export class BudgetEmailTemplateRepository {
     });
   }
 
-  delete(id: number): Promise<budget_email_templates> {
-    return this.prisma.budget_email_templates.delete({ where: { id } });
+  delete(id: number): Promise<email_templates> {
+    return this.prisma.email_templates.delete({ where: { id } });
   }
 }

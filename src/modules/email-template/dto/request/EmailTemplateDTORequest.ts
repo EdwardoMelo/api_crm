@@ -1,8 +1,8 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Trim } from '../../../../common/decorators';
-import { BudgetEmailVariableKey } from '../../constants/budget-email-variables.constants';
+import { EmailTemplateVariableKey } from '../../constants/email-template-variables.constants';
 
-export class CreateBudgetEmailTemplateDTORequest {
+export class CreateEmailTemplateDTORequest {
   @Trim()
   @IsString()
   @IsNotEmpty()
@@ -19,10 +19,10 @@ export class CreateBudgetEmailTemplateDTORequest {
   corpo: string;
 
   @IsOptional()
-  variaveis?: BudgetEmailVariableKey[];
+  variaveis?: EmailTemplateVariableKey[];
 }
 
-export class UpdateBudgetEmailTemplateDTORequest {
+export class UpdateEmailTemplateDTORequest {
   @IsOptional()
   @Trim()
   @IsString()
@@ -42,13 +42,10 @@ export class UpdateBudgetEmailTemplateDTORequest {
   corpo?: string;
 
   @IsOptional()
-  variaveis?: BudgetEmailVariableKey[];
+  variaveis?: EmailTemplateVariableKey[];
 }
 
-export class PreviewBudgetEmailTemplateDTORequest {
-  @IsInt()
-  budgetId: number;
-
+export class PreviewEmailTemplateBodyDTORequest {
   @Trim()
   @IsString()
   @IsNotEmpty()

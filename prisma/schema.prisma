@@ -167,22 +167,22 @@ model CashFlow {
 }
 
 model EmailLog {
-  id                     Int                     @id @default(autoincrement())
+  id                     Int                   @id @default(autoincrement())
   destinatario           String
   assunto                String
-  conteudo               String                  @db.Text
-  status                 EmailStatus             @default(PENDENTE)
+  conteudo               String                @db.Text
+  status                 EmailStatus           @default(PENDENTE)
   dataEnvio              DateTime?
-  createdAt              DateTime                @default(now())
+  createdAt              DateTime              @default(now())
   tenantId               Int
-  createdBy              String                  @default("system") @db.VarChar(20)
-  updatedBy              String                  @default("system") @db.VarChar(20)
+  createdBy              String                @default("system") @db.VarChar(20)
+  updatedBy              String                @default("system") @db.VarChar(20)
   budgetId               Int?
   templateId             Int?
   modoAnexo              email_logs_modoAnexo?
-  budgets                Budget?                 @relation(fields: [budgetId], references: [id])
-  budget_email_templates budget_email_templates? @relation(fields: [templateId], references: [id])
-  tenants                tenants                 @relation(fields: [tenantId], references: [id])
+  budgets                Budget?               @relation(fields: [budgetId], references: [id])
+  budget_email_templates email_templates?      @relation(fields: [templateId], references: [id])
+  tenants                tenants               @relation(fields: [tenantId], references: [id])
 
   @@index([destinatario])
   @@index([status])
@@ -194,30 +194,30 @@ model EmailLog {
 }
 
 model tenants {
-  id                     Int                      @id @default(autoincrement())
-  nome                   String
-  slug                   String                   @unique
-  ativo                  Boolean                  @default(true)
-  createdAt              DateTime                 @default(now())
-  updatedAt              DateTime
-  tipo                   tenants_tipo             @default(EMPRESA)
-  createdBy              String                   @default("system") @db.VarChar(20)
-  updatedBy              String                   @default("system") @db.VarChar(20)
-  budget_email_templates budget_email_templates[]
-  budget_files           budget_files[]
-  budgets                Budget[]
-  cash_flows             CashFlow[]
-  clients                Client[]
-  email_logs             EmailLog[]
-  employees              Employee[]
-  fixedExpenses          FixedExpense[]
-  fixedIncomes           FixedIncome[]
-  installmentPlanItems   InstallmentPlanItem[]
-  installmentPlans       InstallmentPlan[]
-  project_files          project_files[]
-  projects               Project[]
-  tenant_fiscal_info     tenant_fiscal_info?
-  users                  users[]
+  id                   Int                   @id @default(autoincrement())
+  nome                 String
+  slug                 String                @unique
+  ativo                Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime
+  tipo                 tenants_tipo          @default(EMPRESA)
+  createdBy            String                @default("system") @db.VarChar(20)
+  updatedBy            String                @default("system") @db.VarChar(20)
+  budget_files         budget_files[]
+  budgets              Budget[]
+  cash_flows           CashFlow[]
+  clients              Client[]
+  email_logs           EmailLog[]
+  email_templates      email_templates[]
+  employees            Employee[]
+  fixedExpenses        FixedExpense[]
+  fixedIncomes         FixedIncome[]
+  installmentPlanItems InstallmentPlanItem[]
+  installmentPlans     InstallmentPlan[]
+  project_files        project_files[]
+  projects             Project[]
+  tenant_fiscal_info   tenant_fiscal_info?
+  users                users[]
 
   @@index([ativo])
   @@index([nome])
@@ -414,23 +414,6 @@ model InstallmentPlanItem {
   @@map("installment_plan_items")
 }
 
-model budget_email_templates {
-  id         Int        @id @default(autoincrement())
-  tenantId   Int
-  nome       String     @db.VarChar(255)
-  assunto    String     @db.VarChar(255)
-  corpo      String     @db.Text
-  variaveis  String     @db.LongText
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @default(now())
-  createdBy  String     @default("system") @db.VarChar(20)
-  updatedBy  String     @default("system") @db.VarChar(20)
-  tenants    tenants    @relation(fields: [tenantId], references: [id])
-  email_logs EmailLog[]
-
-  @@unique([tenantId, nome])
-}
-
 model budget_files {
   id          Int      @id @default(autoincrement())
   tenantId    Int
@@ -446,6 +429,23 @@ model budget_files {
   tenants     tenants  @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId, budgetId])
+}
+
+model email_templates {
+  id         Int        @id @default(autoincrement())
+  tenantId   Int
+  nome       String     @db.VarChar(255)
+  assunto    String     @db.VarChar(255)
+  corpo      String     @db.Text
+  variaveis  String     @db.LongText
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @default(now())
+  createdBy  String     @default("system") @db.VarChar(20)
+  updatedBy  String     @default("system") @db.VarChar(20)
+  email_logs EmailLog[]
+  tenants    tenants    @relation(fields: [tenantId], references: [id], map: "budget_email_templates_tenantId_fkey")
+
+  @@unique([tenantId, nome])
 }
 
 enum TipoContratacao {

@@ -64,7 +64,7 @@ export class EmailService {
     const logRelations = {
       ...(options?.budgetId ? { budgets: { connect: { id: options.budgetId } } } : {}),
       ...(options?.templateId
-        ? { budget_email_templates: { connect: { id: options.templateId } } }
+        ? { email_templates: { connect: { id: options.templateId } } }
         : {}),
     };
 

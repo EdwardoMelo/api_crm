@@ -1,51 +1,13 @@
 import {
-  BUDGET_EMAIL_VARIABLE_KEYS,
-  BudgetEmailVariableKey,
-} from '../constants/budget-email-variables.constants';
+  EMAIL_TEMPLATE_VARIABLE_KEYS,
+  EmailTemplateVariableKey,
+} from '../constants/email-template-variables.constants';
+import { EmailTemplateVariableContext } from '../types/variable-context.types';
 
-export interface BudgetEmailEmpresaContext {
-  nome: string;
-  razaoSocial: string | null;
-  nomeFantasia: string | null;
-  cnpj: string | null;
-  email: string | null;
-  telefone: string | null;
-  endereco: string | null;
-}
-
-export interface BudgetEmailClienteContext {
-  nome: string;
-  email: string;
-  telefone: string | null;
-  empresa: string | null;
-  documento: string | null;
-}
-
-export interface BudgetEmailOrcamentoContext {
-  titulo: string;
-  valor: number;
-  valorFormatado: string;
-  descricao: string | null;
-  validade: string | null;
-  validadeFormatada: string | null;
-}
-
-export interface BudgetEmailUsuarioContext {
-  nome: string;
-  email: string;
-}
-
-export interface BudgetEmailVariableContext {
-  empresa: BudgetEmailEmpresaContext;
-  cliente: BudgetEmailClienteContext;
-  orcamento: BudgetEmailOrcamentoContext;
-  usuario: BudgetEmailUsuarioContext;
-}
-
-export interface BudgetEmailTemplatePreview {
+export interface EmailTemplatePreview {
   assunto: string;
   corpo: string;
-  variaveis: BudgetEmailVariableKey[];
+  variaveis: EmailTemplateVariableKey[];
 }
 
 function formatCnpj(cnpj: string | null | undefined): string | null {
@@ -67,23 +29,23 @@ function formatDocumento(documento: string | null | undefined): string | null {
   return documento;
 }
 
-export function formatBudgetCurrency(valor: number): string {
+export function formatCurrency(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-export function formatBudgetDate(date: Date | string | null | undefined): string | null {
+export function formatDate(date: Date | string | null | undefined): string | null {
   if (!date) return null;
   const parsed = typeof date === 'string' ? new Date(date) : date;
   if (Number.isNaN(parsed.getTime())) return null;
   return parsed.toLocaleDateString('pt-BR');
 }
 
-export function buildBudgetEmailVariableMap(
-  context: BudgetEmailVariableContext,
+export function buildEmailTemplateVariableMap(
+  context: EmailTemplateVariableContext,
   linkArquivo?: string | null,
-): Map<BudgetEmailVariableKey, string[]> {
-  const map = new Map<BudgetEmailVariableKey, string[]>();
-  const push = (key: BudgetEmailVariableKey, ...values: Array<string | null | undefined>) => {
+): Map<EmailTemplateVariableKey, string[]> {
+  const map = new Map<EmailTemplateVariableKey, string[]>();
+  const push = (key: EmailTemplateVariableKey, ...values: Array<string | null | undefined>) => {
     const filtered = values
       .filter((value): value is string => Boolean(value?.trim()))
       .map((value) => value.trim());
@@ -123,34 +85,34 @@ export function buildBudgetEmailVariableMap(
 
 const PLACEHOLDER_PATTERN = /\{\{([a-zA-Z0-9_.]+)\}\}/g;
 
-export function resolveBudgetEmailTemplate(
+export function resolveEmailTemplate(
   text: string,
-  context: BudgetEmailVariableContext,
+  context: EmailTemplateVariableContext,
   linkArquivo?: string | null,
 ): string {
-  const variableMap = buildBudgetEmailVariableMap(context, linkArquivo);
+  const variableMap = buildEmailTemplateVariableMap(context, linkArquivo);
   return text.replace(PLACEHOLDER_PATTERN, (match, key: string) => {
-    if (!BUDGET_EMAIL_VARIABLE_KEYS.includes(key as BudgetEmailVariableKey)) {
+    if (!EMAIL_TEMPLATE_VARIABLE_KEYS.includes(key as EmailTemplateVariableKey)) {
       return match;
     }
-    const values = variableMap.get(key as BudgetEmailVariableKey);
+    const values = variableMap.get(key as EmailTemplateVariableKey);
     return values?.[0] ?? match;
   });
 }
 
-export function detectBudgetEmailVariables(
+export function detectEmailTemplateVariables(
   assunto: string,
   corpo: string,
-  context: BudgetEmailVariableContext,
+  context: EmailTemplateVariableContext,
   linkArquivo?: string | null,
-): BudgetEmailTemplatePreview {
-  const variableMap = buildBudgetEmailVariableMap(context, linkArquivo);
+): EmailTemplatePreview {
+  const variableMap = buildEmailTemplateVariableMap(context, linkArquivo);
   const entries = [...variableMap.entries()]
     .flatMap(([key, values]) => values.map((value) => ({ key, value })))
     .filter((entry) => entry.value.length >= 2)
     .sort((a, b) => b.value.length - a.value.length);
 
-  const usedKeys = new Set<BudgetEmailVariableKey>();
+  const usedKeys = new Set<EmailTemplateVariableKey>();
   let previewAssunto = assunto;
   let previewCorpo = corpo;
 

@@ -1,27 +1,27 @@
 import {
-  BudgetEmailClienteContext,
-  BudgetEmailEmpresaContext,
-  BudgetEmailOrcamentoContext,
-  BudgetEmailUsuarioContext,
-  BudgetEmailVariableContext,
-} from '../../utils/budget-email-template.utils';
-import { BudgetEmailTemplateDTOResponse } from './BudgetEmailTemplateDTOResponse';
+  EmailTemplateClienteContext,
+  EmailTemplateEmpresaContext,
+  EmailTemplateOrcamentoContext,
+  EmailTemplateUsuarioContext,
+  EmailTemplateVariableContext,
+} from '../../../email-template/types/variable-context.types';
+import { EmailTemplateDTOResponse } from '../../../email-template/dto/response/EmailTemplateDTOResponse';
 import { BudgetFileDTOResponse } from './BudgetFileDTOResponse';
 
 export class BudgetEmailContextDTOResponse {
-  empresa: BudgetEmailEmpresaContext;
-  cliente: BudgetEmailClienteContext;
-  orcamento: BudgetEmailOrcamentoContext;
-  usuario: BudgetEmailUsuarioContext;
+  empresa: EmailTemplateEmpresaContext;
+  cliente: EmailTemplateClienteContext;
+  orcamento: EmailTemplateOrcamentoContext;
+  usuario: EmailTemplateUsuarioContext;
   arquivo: BudgetFileDTOResponse | null;
-  templates: BudgetEmailTemplateDTOResponse[];
+  templates: EmailTemplateDTOResponse[];
   assuntoSugerido: string;
   destinatario: string;
 
   static build(params: {
-    context: BudgetEmailVariableContext;
+    context: EmailTemplateVariableContext;
     arquivo: BudgetFileDTOResponse | null;
-    templates: BudgetEmailTemplateDTOResponse[];
+    templates: EmailTemplateDTOResponse[];
   }): BudgetEmailContextDTOResponse {
     const dto = new BudgetEmailContextDTOResponse();
     dto.empresa = params.context.empresa;
@@ -34,12 +34,6 @@ export class BudgetEmailContextDTOResponse {
     dto.destinatario = params.context.cliente.email;
     return dto;
   }
-}
-
-export class BudgetEmailTemplatePreviewDTOResponse {
-  assunto: string;
-  corpo: string;
-  variaveis: string[];
 }
 
 export class SendBudgetEmailResultDTOResponse {

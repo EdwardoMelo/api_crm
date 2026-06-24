@@ -18,6 +18,8 @@ import { memoryStorage } from 'multer';
 import { ProjectDTOResponse } from '../../project/dto/response/ProjectDTOResponse';
 import { CreateBudgetDTORequest } from '../dto/request/CreateBudgetDTORequest';
 import { ListBudgetDTOQuery } from '../dto/request/ListBudgetDTOQuery';
+import { PreviewEmailTemplateBodyDTORequest } from '../../email-template/dto/request/EmailTemplateDTORequest';
+import { EmailTemplatePreviewDTOResponse } from '../../email-template/dto/response/EmailTemplateDTOResponse';
 import { SendBudgetEmailDTORequest } from '../dto/request/SendBudgetEmailDTORequest';
 import { UpdateBudgetDTORequest } from '../dto/request/UpdateBudgetDTORequest';
 import { BudgetEmailContextDTOResponse, SendBudgetEmailResultDTOResponse } from '../dto/response/BudgetEmailContextDTOResponse';
@@ -51,6 +53,14 @@ export class BudgetController {
     @Param('id', ParseIntPipe) id: number,
   ): Promise<BudgetEmailContextDTOResponse> {
     return this.budgetEmailService.getEmailContext(id);
+  }
+
+  @Post(':id/email-template-preview')
+  previewEmailTemplate(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: PreviewEmailTemplateBodyDTORequest,
+  ): Promise<EmailTemplatePreviewDTOResponse> {
+    return this.budgetEmailService.previewTemplate(id, dto);
   }
 
   @Post(':id/file')

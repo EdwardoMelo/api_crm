@@ -10,6 +10,7 @@ import { ProjectModule } from './modules/project/project.module';
 import { BudgetModule } from './modules/budget/budget.module';
 import { CashFlowModule } from './modules/cashflow/cashflow.module';
 import { EmailModule } from './modules/email/email.module';
+import { EmailTemplateModule } from './modules/email-template/email-template.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { TenantFiscalModule } from './modules/tenant-fiscal/tenant-fiscal.module';
@@ -28,6 +29,7 @@ import { AdminModule } from './modules/admin/admin.module';
     BudgetModule,
     CashFlowModule,
     EmailModule,
+    EmailTemplateModule,
     DashboardModule,
     StorageModule,
     TenantFiscalModule,

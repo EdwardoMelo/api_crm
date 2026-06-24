@@ -1,10 +1,7 @@
-import {
-  BudgetEmailVariableContext,
-  detectBudgetEmailVariables,
-  resolveBudgetEmailTemplate,
-} from './budget-email-template.utils';
+import { EmailTemplateVariableContext } from '../types/variable-context.types';
+import { detectEmailTemplateVariables, resolveEmailTemplate } from './email-template.utils';
 
-const context: BudgetEmailVariableContext = {
+const context: EmailTemplateVariableContext = {
   empresa: {
     nome: 'Daitx Ltda',
     razaoSocial: 'Daitx Tecnologia Ltda',
@@ -35,9 +32,9 @@ const context: BudgetEmailVariableContext = {
   },
 };
 
-describe('budget-email-template.utils', () => {
+describe('email-template.utils', () => {
   it('resolve placeholders with context values', () => {
-    const result = resolveBudgetEmailTemplate(
+    const result = resolveEmailTemplate(
       'Olá, {{cliente.nome}}! Valor: {{orcamento.valorFormatado}}',
       context,
     );
@@ -53,7 +50,7 @@ Segue o orçamento Site institucional no valor de R$ 1.500,00.
 Atenciosamente,
 Maria`;
 
-    const preview = detectBudgetEmailVariables(assunto, corpo, context);
+    const preview = detectEmailTemplateVariables(assunto, corpo, context);
     expect(preview.variaveis).toContain('cliente.nome');
     expect(preview.variaveis).toContain('orcamento.titulo');
     expect(preview.variaveis).toContain('orcamento.valorFormatado');
@@ -63,13 +60,13 @@ Maria`;
   });
 
   it('prefers longer matches to avoid partial replacements', () => {
-    const shortNameContext: BudgetEmailVariableContext = {
+    const shortNameContext: EmailTemplateVariableContext = {
       ...context,
       cliente: { ...context.cliente, nome: 'Jo' },
       orcamento: { ...context.orcamento, titulo: 'João projeto completo' },
     };
 
-    const preview = detectBudgetEmailVariables(
+    const preview = detectEmailTemplateVariables(
       'João projeto completo',
       'Para Jo',
       shortNameContext,

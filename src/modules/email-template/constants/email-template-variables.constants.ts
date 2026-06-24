@@ -1,4 +1,4 @@
-export const BUDGET_EMAIL_VARIABLE_KEYS = [
+export const EMAIL_TEMPLATE_VARIABLE_KEYS = [
   'empresa.nome',
   'empresa.razaoSocial',
   'empresa.nomeFantasia',
@@ -22,9 +22,9 @@ export const BUDGET_EMAIL_VARIABLE_KEYS = [
   'usuario.email',
 ] as const;
 
-export type BudgetEmailVariableKey = (typeof BUDGET_EMAIL_VARIABLE_KEYS)[number];
+export type EmailTemplateVariableKey = (typeof EMAIL_TEMPLATE_VARIABLE_KEYS)[number];
 
-export const BUDGET_EMAIL_VARIABLE_LABELS: Record<BudgetEmailVariableKey, string> = {
+export const EMAIL_TEMPLATE_VARIABLE_LABELS: Record<EmailTemplateVariableKey, string> = {
   'empresa.nome': 'Empresa — nome',
   'empresa.razaoSocial': 'Empresa — razão social',
   'empresa.nomeFantasia': 'Empresa — nome fantasia',

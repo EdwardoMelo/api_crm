@@ -4,28 +4,28 @@ import { BudgetStatus, email_logs_modoAnexo } from '@prisma/client';
 import { ActorContextService } from '../../../common/audit';
 import { BusinessRuleException, EntityNotFoundException } from '../../../common/exceptions';
 import { TenantContextService } from '../../../common/tenant';
+import { PreviewEmailTemplateBodyDTORequest } from '../../email-template/dto/request/EmailTemplateDTORequest';
+import { EmailTemplatePreviewDTOResponse } from '../../email-template/dto/response/EmailTemplateDTOResponse';
+import { EmailTemplateService } from '../../email-template/service/EmailTemplateService';
+import { EmailTemplateVariableContext } from '../../email-template/types/variable-context.types';
+import {
+  detectEmailTemplateVariables,
+  formatCurrency,
+  formatDate,
+  plainTextToHtml,
+} from '../../email-template/utils/email-template.utils';
 import { EmailService } from '../../email/service/EmailService';
 import { FILE_STORAGE, FileStorageProvider } from '../../storage/storage.interface';
 import { TenantFiscalService } from '../../tenant-fiscal/service/TenantFiscalService';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { PreviewBudgetEmailTemplateDTORequest } from '../dto/request/BudgetEmailTemplateDTORequest';
 import { SendBudgetEmailDTORequest } from '../dto/request/SendBudgetEmailDTORequest';
-import { BudgetEmailTemplatePreviewDTOResponse } from '../dto/response/BudgetEmailContextDTOResponse';
 import {
   BudgetEmailContextDTOResponse,
   SendBudgetEmailResultDTOResponse,
 } from '../dto/response/BudgetEmailContextDTOResponse';
 import { BudgetRepository } from '../repository/BudgetRepository';
-import { BudgetEmailTemplateService } from './BudgetEmailTemplateService';
 import { BudgetFileService } from './BudgetFileService';
 import { BUDGET_FILE_SIGNED_URL_TTL_MS } from '../utils/budget-file.utils';
-import {
-  formatBudgetCurrency,
-  formatBudgetDate,
-  plainTextToHtml,
-  BudgetEmailVariableContext,
-  detectBudgetEmailVariables,
-} from '../utils/budget-email-template.utils';
 
 @Injectable()
 export class BudgetEmailService {
@@ -34,7 +34,7 @@ export class BudgetEmailService {
   constructor(
     private readonly budgetRepository: BudgetRepository,
     private readonly budgetFileService: BudgetFileService,
-    private readonly templateService: BudgetEmailTemplateService,
+    private readonly templateService: EmailTemplateService,
     private readonly emailService: EmailService,
     private readonly tenantFiscalService: TenantFiscalService,
     private readonly tenantContext: TenantContextService,
@@ -52,10 +52,11 @@ export class BudgetEmailService {
   }
 
   async previewTemplate(
-    dto: PreviewBudgetEmailTemplateDTORequest,
-  ): Promise<BudgetEmailTemplatePreviewDTOResponse> {
-    const context = await this.buildVariableContext(dto.budgetId);
-    const arquivo = await this.budgetFileService.getFile(dto.budgetId);
+    budgetId: number,
+    dto: PreviewEmailTemplateBodyDTORequest,
+  ): Promise<EmailTemplatePreviewDTOResponse> {
+    const context = await this.buildVariableContext(budgetId);
+    const arquivo = await this.budgetFileService.getFile(budgetId);
     return this.templateService.previewFromBody(dto, context, arquivo?.downloadUrl ?? null);
   }
 
@@ -139,7 +140,7 @@ export class BudgetEmailService {
     }
 
     if (dto.saveAsTemplate) {
-      const preview = detectBudgetEmailVariables(dto.assunto, dto.corpo, context, linkArquivo);
+      const preview = detectEmailTemplateVariables(dto.assunto, dto.corpo, context, linkArquivo);
       await this.templateService.createFromDetected(
         dto.templateNome ?? `Template ${budget.titulo}`,
         preview.assunto,
@@ -167,7 +168,7 @@ export class BudgetEmailService {
     }
   }
 
-  private async buildVariableContext(budgetId: number): Promise<BudgetEmailVariableContext> {
+  private async buildVariableContext(budgetId: number): Promise<EmailTemplateVariableContext> {
     const budget = await this.budgetRepository.findByIdWithClient(budgetId);
     if (!budget) {
       throw new EntityNotFoundException('Orçamento', budgetId);
@@ -210,10 +211,10 @@ export class BudgetEmailService {
       orcamento: {
         titulo: budget.titulo,
         valor,
-        valorFormatado: formatBudgetCurrency(valor),
+        valorFormatado: formatCurrency(valor),
         descricao: budget.descricao,
         validade: budget.dataValidade?.toISOString() ?? null,
-        validadeFormatada: formatBudgetDate(budget.dataValidade),
+        validadeFormatada: formatDate(budget.dataValidade),
       },
       usuario: {
         nome: this.actorContext.getActorNome(),

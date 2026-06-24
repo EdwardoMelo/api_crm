@@ -38,6 +38,11 @@ export class NodemailerMailSender implements MailSender {
         to: message.to,
         subject: message.subject,
         html: message.html,
+        attachments: message.attachments?.map((attachment) => ({
+          filename: attachment.filename,
+          content: attachment.content,
+          contentType: attachment.contentType,
+        })),
       });
     } catch (error) {
       this.logger.error(`Erro ao enviar e-mail para ${message.to}`, (error as Error).stack);

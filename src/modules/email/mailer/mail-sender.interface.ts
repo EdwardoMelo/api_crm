@@ -1,9 +1,16 @@
 export const MAIL_SENDER = Symbol('MAIL_SENDER');
 
+export interface MailAttachment {
+  filename: string;
+  content: Buffer;
+  contentType?: string;
+}
+
 export interface MailMessage {
   to: string;
   subject: string;
   html: string;
+  attachments?: MailAttachment[];
 }
 
 /**

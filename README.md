@@ -1,6 +1,6 @@
-# CRM Financeiro — Backend (NestJS + Prisma + MySQL)
+# Domidy CRM — Backend (NestJS + Prisma + MySQL)
 
-API de um CRM financeiro para pequenas empresas, com arquitetura em camadas
+API do Domidy CRM para pequenas empresas, com arquitetura em camadas
 **Controller → Service → Repository → Prisma**, DTOs de request/response,
 validação global, tratamento centralizado de exceções e cobertura de testes.
 

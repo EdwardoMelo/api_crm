@@ -73,6 +73,7 @@ describe('ProjectService', () => {
     };
     const fileStorageMock: jest.Mocked<FileStorageProvider> = {
       upload: jest.fn(),
+      download: jest.fn(),
       delete: jest.fn(),
       getSignedUrl: jest.fn(),
     };

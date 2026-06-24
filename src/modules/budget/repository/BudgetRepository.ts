@@ -43,6 +43,13 @@ export class BudgetRepository {
     });
   }
 
+  findByIdWithClient(id: number) {
+    return this.prisma.budget.findFirst({
+      where: { id, tenantId: this.tenantContext.getTenantId() },
+      include: { cliente: true },
+    });
+  }
+
   update(id: number, data: Prisma.BudgetUpdateInput): Promise<Budget> {
     return this.prisma.budget.update({
       where: { id },

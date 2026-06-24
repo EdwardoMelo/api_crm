@@ -42,6 +42,7 @@ describe('CashFlowService', () => {
 
   const fileStorageMock = {
     upload: jest.fn(),
+    download: jest.fn().mockResolvedValue(Buffer.from('file')),
     delete: jest.fn(),
     getSignedUrl: jest.fn().mockResolvedValue('https://example.com/file'),
   };

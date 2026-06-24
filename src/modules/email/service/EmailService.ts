@@ -1,10 +1,16 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { EmailStatus } from '@prisma/client';
-import { MAIL_SENDER, MailMessage, MailSender } from '../mailer/mail-sender.interface';
+import { EmailStatus, email_logs_modoAnexo } from '@prisma/client';
+import { MAIL_SENDER, MailAttachment, MailMessage, MailSender } from '../mailer/mail-sender.interface';
 import { SendBudgetEmailDTORequest } from '../dto/request/SendBudgetEmailDTORequest';
 import { SendChargeEmailDTORequest } from '../dto/request/SendChargeEmailDTORequest';
 import { EmailLogDTOResponse } from '../dto/response/EmailLogDTOResponse';
 import { EmailLogRepository } from '../repository/EmailLogRepository';
+
+export interface CustomEmailDispatchOptions {
+  budgetId?: number;
+  templateId?: number;
+  modoAnexo?: email_logs_modoAnexo;
+}
 
 @Injectable()
 export class EmailService {
@@ -27,6 +33,16 @@ export class EmailService {
     return this.dispatch(dto.destinatario, assunto, conteudo);
   }
 
+  async sendCustomEmail(
+    destinatario: string,
+    assunto: string,
+    conteudoHtml: string,
+    attachments?: MailAttachment[],
+    options?: CustomEmailDispatchOptions,
+  ): Promise<EmailLogDTOResponse> {
+    return this.dispatch(destinatario, assunto, conteudoHtml, attachments, options);
+  }
+
   async findAllLogs(): Promise<EmailLogDTOResponse[]> {
     const logs = await this.emailLogRepository.findAll();
     return EmailLogDTOResponse.fromEntities(logs);
@@ -40,15 +56,30 @@ export class EmailService {
     destinatario: string,
     assunto: string,
     conteudo: string,
+    attachments?: MailAttachment[],
+    options?: CustomEmailDispatchOptions,
   ): Promise<EmailLogDTOResponse> {
-    const message: MailMessage = { to: destinatario, subject: assunto, html: conteudo };
+    const message: MailMessage = { to: destinatario, subject: assunto, html: conteudo, attachments };
+
+    const logRelations = {
+      ...(options?.budgetId ? { budgets: { connect: { id: options.budgetId } } } : {}),
+      ...(options?.templateId
+        ? { budget_email_templates: { connect: { id: options.templateId } } }
+        : {}),
+    };
+
+    const logBase = {
+      destinatario,
+      assunto,
+      conteudo,
+      modoAnexo: options?.modoAnexo,
+      ...logRelations,
+    };
 
     try {
       await this.mailSender.send(message);
       const log = await this.emailLogRepository.create({
-        destinatario,
-        assunto,
-        conteudo,
+        ...logBase,
         status: EmailStatus.ENVIADO,
         dataEnvio: new Date(),
       });
@@ -56,9 +87,7 @@ export class EmailService {
     } catch (error) {
       this.logger.error(`Falha no envio de e-mail para ${destinatario}`, (error as Error).stack);
       await this.emailLogRepository.create({
-        destinatario,
-        assunto,
-        conteudo,
+        ...logBase,
         status: EmailStatus.FALHA,
       });
       throw error;

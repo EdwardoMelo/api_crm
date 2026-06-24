@@ -22,4 +22,12 @@ export class ActorContextService {
     const userId = this.request.user?.id;
     return userId ? String(userId) : SYSTEM_ACTOR;
   }
+
+  getActorNome(): string {
+    return this.request.user?.nome ?? 'Equipe';
+  }
+
+  getActorEmail(): string {
+    return this.request.user?.email ?? '';
+  }
 }

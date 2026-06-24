@@ -51,6 +51,16 @@ export class FirebaseStorageService implements FileStorageProvider {
     }
   }
 
+  async download(storagePath: string): Promise<Buffer> {
+    try {
+      const [buffer] = await this.getBucket().file(storagePath).download();
+      return buffer;
+    } catch (error) {
+      this.logger.error(`Erro ao baixar arquivo ${storagePath}`, (error as Error).stack);
+      throw error;
+    }
+  }
+
   async delete(storagePath: string): Promise<void> {
     try {
       await this.getBucket().file(storagePath).delete({ ignoreNotFound: true });

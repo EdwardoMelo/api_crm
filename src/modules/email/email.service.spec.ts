@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { EmailStatus } from '@prisma/client';
+import { EmailStatus, email_logs_modoAnexo } from '@prisma/client';
 import { MAIL_SENDER, MailSender } from './mailer/mail-sender.interface';
 import { EmailLogRepository } from './repository/EmailLogRepository';
 import { EmailService } from './service/EmailService';
@@ -48,6 +48,22 @@ describe('EmailService', () => {
     expect(mailSender.send).toHaveBeenCalled();
     expect(logRepository.create).toHaveBeenCalledWith(
       expect.objectContaining({ status: EmailStatus.ENVIADO }),
+    );
+  });
+
+  it('envia e-mail customizado com anexo', async () => {
+    mailSender.send.mockResolvedValue();
+    await service.sendCustomEmail(
+      'a@a.com',
+      'Assunto',
+      '<p>Corpo</p>',
+      [{ filename: 'doc.pdf', content: Buffer.from('pdf'), contentType: 'application/pdf' }],
+      { budgetId: 1, modoAnexo: email_logs_modoAnexo.ANEXO },
+    );
+    expect(mailSender.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attachments: expect.arrayContaining([expect.objectContaining({ filename: 'doc.pdf' })]),
+      }),
     );
   });
 

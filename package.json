@@ -2,7 +2,7 @@
   "name": "api_crm",
   "version": "1.0.0",
   "private": true,
-  "description": "CRM financeiro para pequenas empresas - backend NestJS + Prisma",
+  "description": "Domidy CRM para pequenas empresas - backend NestJS + Prisma",
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",

@@ -63,4 +63,120 @@ export class CashFlowRepository {
 
       .then((result) => Number(result._sum?.valor ?? 0));
   }
+
+  createMany(
+    data: Omit<Prisma.CashFlowCreateManyInput, 'tenantId' | 'createdBy' | 'updatedBy' | 'updatedAt'>[],
+  ): Promise<number> {
+    if (data.length === 0) {
+      return Promise.resolve(0);
+    }
+    const tenantId = this.tenantContext.getTenantId();
+    const audit = auditCreateFields(this.actorContext.getActorId());
+    return this.prisma.cashFlow
+      .createMany({
+        data: data.map((row) => ({
+          ...row,
+          ...audit,
+          tenantId,
+          updatedAt: new Date(),
+        })),
+      })
+      .then((result) => result.count);
+  }
+
+  cancelPendingByFixedExpense(fixedExpenseId: number, fromDate?: Date): Promise<number> {
+    return this.prisma.cashFlow
+      .updateMany({
+        where: {
+          tenantId: this.tenantContext.getTenantId(),
+          fixedExpenseId,
+          status: 'PENDENTE',
+          ...(fromDate ? { dataCompetencia: { gte: fromDate } } : {}),
+        },
+        data: {
+          status: 'CANCELADO',
+          ...auditUpdateFields(this.actorContext.getActorId()),
+        },
+      })
+      .then((r) => r.count);
+  }
+
+  cancelPendingByFixedIncome(fixedIncomeId: number, fromDate?: Date): Promise<number> {
+    return this.prisma.cashFlow
+      .updateMany({
+        where: {
+          tenantId: this.tenantContext.getTenantId(),
+          fixedIncomeId,
+          status: 'PENDENTE',
+          ...(fromDate ? { dataCompetencia: { gte: fromDate } } : {}),
+        },
+        data: {
+          status: 'CANCELADO',
+          ...auditUpdateFields(this.actorContext.getActorId()),
+        },
+      })
+      .then((r) => r.count);
+  }
+
+  updatePendingByFixedExpense(
+    fixedExpenseId: number,
+    data: Pick<Prisma.CashFlowUpdateManyMutationInput, 'valor' | 'categoria'>,
+    fromDate: Date,
+  ): Promise<number> {
+    return this.prisma.cashFlow
+      .updateMany({
+        where: {
+          tenantId: this.tenantContext.getTenantId(),
+          fixedExpenseId,
+          status: 'PENDENTE',
+          dataCompetencia: { gte: fromDate },
+        },
+        data: {
+          ...data,
+          ...auditUpdateFields(this.actorContext.getActorId()),
+        },
+      })
+      .then((r) => r.count);
+  }
+
+  updatePendingByFixedIncome(
+    fixedIncomeId: number,
+    data: Pick<Prisma.CashFlowUpdateManyMutationInput, 'valor' | 'categoria'>,
+    fromDate: Date,
+  ): Promise<number> {
+    return this.prisma.cashFlow
+      .updateMany({
+        where: {
+          tenantId: this.tenantContext.getTenantId(),
+          fixedIncomeId,
+          status: 'PENDENTE',
+          dataCompetencia: { gte: fromDate },
+        },
+        data: {
+          ...data,
+          ...auditUpdateFields(this.actorContext.getActorId()),
+        },
+      })
+      .then((r) => r.count);
+  }
+
+  findByFixedExpenseId(fixedExpenseId: number) {
+    return this.prisma.cashFlow.findMany({
+      where: {
+        tenantId: this.tenantContext.getTenantId(),
+        fixedExpenseId,
+      },
+      orderBy: { dataCompetencia: 'asc' },
+    });
+  }
+
+  findByFixedIncomeId(fixedIncomeId: number) {
+    return this.prisma.cashFlow.findMany({
+      where: {
+        tenantId: this.tenantContext.getTenantId(),
+        fixedIncomeId,
+      },
+      orderBy: { dataCompetencia: 'asc' },
+    });
+  }
 }

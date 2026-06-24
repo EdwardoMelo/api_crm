@@ -3,6 +3,7 @@ import * as bcrypt from 'bcrypt';
 import request from 'supertest';
 import { users_role } from '@prisma/client';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { E2E_REGISTER_EMAIL_DOMAIN } from '../../src/prisma/e2e-test.constants';
 import { SYSTEM_ACTOR, auditCreateFields } from '../../src/common/audit';
 
 export const AUTH_FIXTURE = {
@@ -12,6 +13,10 @@ export const AUTH_FIXTURE = {
   password: 'admin123',
   nome: 'Administrador',
 };
+
+export function buildE2eRegisterEmail(localPart = 'carlos'): string {
+  return `${localPart}-${Date.now()}${E2E_REGISTER_EMAIL_DOMAIN}`;
+}
 
 /** Cria tenant + usuário admin com senha conhecida (após cleanDatabase). */
 export async function seedAuthUser(prisma: PrismaService): Promise<void> {

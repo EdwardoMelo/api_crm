@@ -8,22 +8,24 @@ datasource db {
 }
 
 model Client {
-  id          Int        @id @default(autoincrement())
-  nome        String
-  email       String
-  telefone    String?
-  empresa     String?
-  documento   String?
-  observacoes String?    @db.Text
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  tenantId    Int
-  createdBy   String     @default("system") @db.VarChar(20)
-  updatedBy   String     @default("system") @db.VarChar(20)
-  budgets     Budget[]
-  cashFlows   CashFlow[]
-  tenants     tenants    @relation(fields: [tenantId], references: [id])
-  projects    Project[]
+  id                Int                 @id @default(autoincrement())
+  nome              String
+  email             String
+  telefone          String?
+  empresa           String?
+  documento         String?
+  observacoes       String?             @db.Text
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  tenantId          Int
+  createdBy         String              @default("system") @db.VarChar(20)
+  updatedBy         String              @default("system") @db.VarChar(20)
+  budgets           Budget[]
+  cashFlows         CashFlow[]
+  tenants           tenants             @relation(fields: [tenantId], references: [id])
+  fixedIncomes      FixedIncome[]
+  installmentPlans  InstallmentPlan[]
+  projects          Project[]
 
   @@index([nome])
   @@index([email])
@@ -33,21 +35,23 @@ model Client {
 }
 
 model Employee {
-  id              Int             @id @default(autoincrement())
-  nome            String
-  email           String
-  telefone        String?
-  cargo           String?
-  tipoContratacao TipoContratacao
-  salarioBase     Decimal?        @db.Decimal(12, 2)
-  ativo           Boolean         @default(true)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  tenantId        Int
-  createdBy       String          @default("system") @db.VarChar(20)
-  updatedBy       String          @default("system") @db.VarChar(20)
-  cashFlows       CashFlow[]
-  tenants         tenants         @relation(fields: [tenantId], references: [id])
+  id                Int                 @id @default(autoincrement())
+  nome              String
+  email             String
+  telefone          String?
+  cargo             String?
+  tipoContratacao   TipoContratacao
+  salarioBase       Decimal?            @db.Decimal(12, 2)
+  ativo             Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  tenantId          Int
+  createdBy         String              @default("system") @db.VarChar(20)
+  updatedBy         String              @default("system") @db.VarChar(20)
+  cashFlows         CashFlow[]
+  tenants           tenants             @relation(fields: [tenantId], references: [id])
+  fixedExpenses     FixedExpense[]
+  installmentPlans  InstallmentPlan[]
 
   @@index([nome])
   @@index([tipoContratacao])
@@ -82,25 +86,27 @@ model Budget {
 }
 
 model Project {
-  id              Int             @id @default(autoincrement())
-  clienteId       Int
-  budgetId        Int?            @unique
-  titulo          String
-  descricao       String?         @db.Text
-  valorTotal      Decimal         @db.Decimal(12, 2)
-  status          ProjectStatus   @default(PLANEJADO)
-  dataInicio      DateTime?
-  dataFimPrevista DateTime?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  tenantId        Int
-  createdBy       String          @default("system") @db.VarChar(20)
-  updatedBy       String          @default("system") @db.VarChar(20)
-  cashFlows       CashFlow[]
-  project_files   project_files[]
-  budget          Budget?         @relation(fields: [budgetId], references: [id])
-  cliente         Client          @relation(fields: [clienteId], references: [id])
-  tenants         tenants         @relation(fields: [tenantId], references: [id])
+  id                Int                 @id @default(autoincrement())
+  clienteId         Int
+  budgetId          Int?                @unique
+  titulo            String
+  descricao         String?             @db.Text
+  valorTotal        Decimal             @db.Decimal(12, 2)
+  status            ProjectStatus       @default(PLANEJADO)
+  dataInicio        DateTime?
+  dataFimPrevista   DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  tenantId          Int
+  createdBy         String              @default("system") @db.VarChar(20)
+  updatedBy         String              @default("system") @db.VarChar(20)
+  cashFlows         CashFlow[]
+  fixedIncomes      FixedIncome[]
+  installmentPlans  InstallmentPlan[]
+  project_files     project_files[]
+  budget            Budget?             @relation(fields: [budgetId], references: [id])
+  cliente           Client              @relation(fields: [clienteId], references: [id])
+  tenants           tenants             @relation(fields: [tenantId], references: [id])
 
   @@index([clienteId])
   @@index([status])
@@ -110,31 +116,40 @@ model Project {
 }
 
 model CashFlow {
-  id                    Int            @id @default(autoincrement())
-  descricao             String
-  valor                 Decimal        @db.Decimal(12, 2)
-  tipo                  CashFlowType
-  status                CashFlowStatus @default(PENDENTE)
-  dataCompetencia       DateTime
-  dataPagamento         DateTime?
-  categoria             String?
-  projectId             Int?
-  clientId              Int?
-  employeeId            Int?
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
-  tenantId              Int
-  notaFiscalFileName    String?        @db.VarChar(255)
-  notaFiscalStoragePath String?        @db.VarChar(512)
-  notaFiscalMimeType    String?        @db.VarChar(127)
-  notaFiscalSizeBytes   Int?
-  createdBy             String         @default("system") @db.VarChar(20)
-  updatedBy             String         @default("system") @db.VarChar(20)
-  client                Client?        @relation(fields: [clientId], references: [id])
-  employee              Employee?      @relation(fields: [employeeId], references: [id])
-  project               Project?       @relation(fields: [projectId], references: [id])
-  tenants               tenants        @relation(fields: [tenantId], references: [id])
+  id                     Int                     @id @default(autoincrement())
+  descricao              String
+  valor                  Decimal                 @db.Decimal(12, 2)
+  tipo                   CashFlowType
+  status                 CashFlowStatus          @default(PENDENTE)
+  dataCompetencia        DateTime
+  dataPagamento          DateTime?
+  categoria              String?
+  projectId              Int?
+  clientId               Int?
+  employeeId             Int?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  tenantId               Int
+  notaFiscalFileName     String?                 @db.VarChar(255)
+  notaFiscalStoragePath  String?                 @db.VarChar(512)
+  notaFiscalMimeType     String?                 @db.VarChar(127)
+  notaFiscalSizeBytes    Int?
+  createdBy              String                  @default("system") @db.VarChar(20)
+  updatedBy              String                  @default("system") @db.VarChar(20)
+  sourceType            CashFlowSourceType    @default(MANUAL)
+  fixedExpenseId        Int?
+  fixedIncomeId         Int?
+  installmentPlanItemId Int?                  @unique
+  client                Client?               @relation(fields: [clientId], references: [id])
+  employee              Employee?             @relation(fields: [employeeId], references: [id])
+  fixedExpense          FixedExpense?         @relation(fields: [fixedExpenseId], references: [id])
+  fixedIncome           FixedIncome?          @relation(fields: [fixedIncomeId], references: [id])
+  installmentPlanItem   InstallmentPlanItem?  @relation(fields: [installmentPlanItemId], references: [id])
+  project                Project?                @relation(fields: [projectId], references: [id])
+  tenants                tenants                 @relation(fields: [tenantId], references: [id])
 
+  @@unique([tenantId, fixedExpenseId, dataCompetencia], map: "cash_flows_tenant_fixed_expense_competence_key")
+  @@unique([tenantId, fixedIncomeId, dataCompetencia], map: "cash_flows_tenant_fixed_income_competence_key")
   @@index([tipo])
   @@index([status])
   @@index([dataCompetencia])
@@ -143,6 +158,9 @@ model CashFlow {
   @@index([employeeId])
   @@index([tenantId])
   @@index([createdBy])
+  @@index([fixedExpenseId])
+  @@index([fixedIncomeId])
+  @@index([sourceType])
   @@map("cash_flows")
 }
 
@@ -167,24 +185,28 @@ model EmailLog {
 }
 
 model tenants {
-  id                 Int                 @id @default(autoincrement())
-  nome               String
-  slug               String              @unique
-  ativo              Boolean             @default(true)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime
-  tipo               tenants_tipo        @default(EMPRESA)
-  createdBy          String              @default("system") @db.VarChar(20)
-  updatedBy          String              @default("system") @db.VarChar(20)
-  budgets            Budget[]
-  cash_flows         CashFlow[]
-  clients            Client[]
-  email_logs         EmailLog[]
-  employees          Employee[]
-  project_files      project_files[]
-  projects           Project[]
-  tenant_fiscal_info tenant_fiscal_info?
-  users              users[]
+  id                     Int                      @id @default(autoincrement())
+  nome                   String
+  slug                   String                   @unique
+  ativo                  Boolean                  @default(true)
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime
+  tipo                   tenants_tipo             @default(EMPRESA)
+  createdBy              String                   @default("system") @db.VarChar(20)
+  updatedBy              String                   @default("system") @db.VarChar(20)
+  budgets                Budget[]
+  cash_flows             CashFlow[]
+  clients                Client[]
+  email_logs             EmailLog[]
+  employees              Employee[]
+  fixedExpenses        FixedExpense[]
+  fixedIncomes         FixedIncome[]
+  installmentPlans     InstallmentPlan[]
+  installmentPlanItems InstallmentPlanItem[]
+  project_files          project_files[]
+  projects               Project[]
+  tenant_fiscal_info     tenant_fiscal_info?
+  users                  users[]
 
   @@index([ativo])
   @@index([nome])
@@ -259,6 +281,128 @@ model tenant_fiscal_info {
   @@index([createdBy])
 }
 
+model FixedExpense {
+  id            Int            @id @default(autoincrement())
+  tenantId      Int
+  description   String         @db.VarChar(180)
+  amount        Decimal        @db.Decimal(12, 2)
+  category      String?        @db.VarChar(120)
+  dueDayOfMonth Int            @db.UnsignedTinyInt
+  startsOn      DateTime       @db.Date
+  endsOn        DateTime       @db.Date
+  active        Boolean        @default(true)
+  employeeId    Int?
+  renewedFromId Int?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  createdBy     String         @default("system") @db.VarChar(20)
+  updatedBy     String         @default("system") @db.VarChar(20)
+  cashFlows     CashFlow[]
+  employee      Employee?      @relation(fields: [employeeId], references: [id])
+  renewedFrom   FixedExpense?  @relation("FixedExpenseRenewal", fields: [renewedFromId], references: [id])
+  renewals      FixedExpense[] @relation("FixedExpenseRenewal")
+  tenants       tenants        @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([active])
+  @@index([employeeId])
+  @@index([renewedFromId])
+  @@index([createdBy])
+  @@map("fixed_expenses")
+}
+
+model FixedIncome {
+  id            Int           @id @default(autoincrement())
+  tenantId      Int
+  description   String        @db.VarChar(180)
+  amount        Decimal       @db.Decimal(12, 2)
+  category      String?       @db.VarChar(120)
+  dueDayOfMonth Int           @db.UnsignedTinyInt
+  startsOn      DateTime      @db.Date
+  endsOn        DateTime      @db.Date
+  active        Boolean       @default(true)
+  clientId      Int?
+  projectId     Int?
+  renewedFromId Int?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  createdBy     String        @default("system") @db.VarChar(20)
+  updatedBy     String        @default("system") @db.VarChar(20)
+  cashFlows     CashFlow[]
+  client        Client?       @relation(fields: [clientId], references: [id])
+  project       Project?      @relation(fields: [projectId], references: [id])
+  renewedFrom   FixedIncome?  @relation("FixedIncomeRenewal", fields: [renewedFromId], references: [id])
+  renewals      FixedIncome[] @relation("FixedIncomeRenewal")
+  tenants       tenants       @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([active])
+  @@index([clientId])
+  @@index([projectId])
+  @@index([renewedFromId])
+  @@index([createdBy])
+  @@map("fixed_incomes")
+}
+
+model InstallmentPlan {
+  id                  Int                   @id @default(autoincrement())
+  tenantId            Int
+  description         String                @db.VarChar(180)
+  type                CashFlowType
+  totalAmount         Decimal               @db.Decimal(12, 2)
+  installmentCount    Int
+  interestRatePercent Decimal?              @db.Decimal(5, 2)
+  firstDueDate        DateTime              @db.Date
+  category            String?               @db.VarChar(120)
+  clientId            Int?
+  projectId           Int?
+  employeeId          Int?
+  status              InstallmentPlanStatus @default(ACTIVE)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  createdBy           String                @default("system") @db.VarChar(20)
+  updatedBy           String                @default("system") @db.VarChar(20)
+  items               InstallmentPlanItem[]
+  client              Client?               @relation(fields: [clientId], references: [id])
+  employee            Employee?             @relation(fields: [employeeId], references: [id])
+  project             Project?              @relation(fields: [projectId], references: [id])
+  tenants             tenants               @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+  @@index([clientId])
+  @@index([projectId])
+  @@index([employeeId])
+  @@index([createdBy])
+  @@map("installment_plans")
+}
+
+model InstallmentPlanItem {
+  id                Int            @id @default(autoincrement())
+  tenantId          Int
+  installmentPlanId Int
+  installmentNumber Int
+  amount            Decimal        @db.Decimal(12, 2)
+  dueDate           DateTime       @db.Date
+  status            CashFlowStatus @default(PENDENTE)
+  paidAt            DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  createdBy         String         @default("system") @db.VarChar(20)
+  updatedBy         String         @default("system") @db.VarChar(20)
+  cashFlow          CashFlow?
+  installmentPlan   InstallmentPlan @relation(fields: [installmentPlanId], references: [id], onDelete: Cascade)
+  tenants           tenants        @relation(fields: [tenantId], references: [id])
+
+  @@unique([installmentPlanId, installmentNumber], map: "installment_plan_items_plan_number_key")
+  @@index([tenantId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([createdBy])
+  @@map("installment_plan_items")
+}
+
 enum TipoContratacao {
   CLT
   PJ
@@ -292,6 +436,19 @@ enum CashFlowStatus {
   PENDENTE
   PAGO
   CANCELADO
+}
+
+enum CashFlowSourceType {
+  MANUAL
+  FIXED_EXPENSE
+  FIXED_INCOME
+  INSTALLMENT
+}
+
+enum InstallmentPlanStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
 }
 
 enum EmailStatus {

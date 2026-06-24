@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { PrismaService } from '../src/prisma/prisma.service';
-import { AUTH_FIXTURE, bearer, loginAsAdmin, seedAuthUser } from './setup/auth.helper';
+import { AUTH_FIXTURE, bearer, buildE2eRegisterEmail, loginAsAdmin, seedAuthUser } from './setup/auth.helper';
 import { createTestApp } from './setup/test-app.factory';
 
 describe('Auth (e2e)', () => {
@@ -63,13 +63,15 @@ describe('Auth (e2e)', () => {
   });
 
   it('POST /auth/register cria conta e permite login', async () => {
+    const registerEmail = buildE2eRegisterEmail();
+
     await request(app.getHttpServer())
       .post('/api/auth/register')
       .send({
         accountType: 'EMPRESA',
         nome: 'Carlos Eng',
         nomeEmpresa: 'Projetos CS',
-        email: 'carlos@daitx.test',
+        email: registerEmail,
         password: 'senha1234',
       })
       .expect(201);
@@ -77,7 +79,7 @@ describe('Auth (e2e)', () => {
     const loginResponse = await request(app.getHttpServer())
       .post('/api/auth/login')
       .send({
-        email: 'carlos@daitx.test',
+        email: registerEmail,
         password: 'senha1234',
       })
       .expect(200);

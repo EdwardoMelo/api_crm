@@ -1,0 +1,11 @@
+export const FIXED_ITEM_EXPIRING_SOON_DAYS = 7;
+
+export const MAX_FIXED_VIGENCY_MONTHS = 24;
+
+export enum FixedItemLifecycleStatus {
+  INACTIVE = 'INACTIVE',
+  SCHEDULED = 'SCHEDULED',
+  ACTIVE = 'ACTIVE',
+  EXPIRING_SOON = 'EXPIRING_SOON',
+  EXPIRED = 'EXPIRED',
+}

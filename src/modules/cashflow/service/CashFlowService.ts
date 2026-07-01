@@ -19,6 +19,7 @@ import {
   buildCashFlowInvoiceStoragePath,
   validateCashFlowInvoiceFile,
 } from '../utils/cash-flow-invoice.utils';
+import { resolveDataPagamento } from '../utils/cash-flow-date.utils';
 
 @Injectable()
 export class CashFlowService {
@@ -32,13 +33,21 @@ export class CashFlowService {
 
   async create(dto: CreateCashFlowDTORequest): Promise<CashFlowDTOResponse> {
     try {
+      const nextStatus = dto.status ?? CashFlowStatus.PENDENTE;
+      const resolvedDataPagamento = resolveDataPagamento({
+        currentStatus: CashFlowStatus.PENDENTE,
+        nextStatus,
+        currentDataPagamento: null,
+        dtoDataPagamento: dto.dataPagamento,
+        isUpdate: false,
+      });
       const data: Omit<Prisma.CashFlowCreateInput, 'tenants'> = {
         descricao: dto.descricao,
         valor: dto.valor,
         tipo: dto.tipo,
         status: dto.status,
         dataCompetencia: new Date(dto.dataCompetencia),
-        dataPagamento: dto.dataPagamento ? new Date(dto.dataPagamento) : undefined,
+        dataPagamento: resolvedDataPagamento ?? undefined,
         categoria: dto.categoria,
         project: dto.projectId ? { connect: { id: dto.projectId } } : undefined,
         client: dto.clientId ? { connect: { id: dto.clientId } } : undefined,
@@ -84,13 +93,21 @@ export class CashFlowService {
   async update(id: number, dto: UpdateCashFlowDTORequest): Promise<CashFlowDTOResponse> {
     const existing = await this.getExistingCashFlow(id);
     try {
+      const nextStatus = dto.status ?? existing.status;
+      const resolvedDataPagamento = resolveDataPagamento({
+        currentStatus: existing.status,
+        nextStatus,
+        currentDataPagamento: existing.dataPagamento,
+        dtoDataPagamento: dto.dataPagamento,
+        isUpdate: true,
+      });
       const data: Prisma.CashFlowUpdateInput = {
         descricao: dto.descricao,
         valor: dto.valor,
         tipo: dto.tipo,
         status: dto.status,
         dataCompetencia: dto.dataCompetencia ? new Date(dto.dataCompetencia) : undefined,
-        dataPagamento: dto.dataPagamento ? new Date(dto.dataPagamento) : undefined,
+        dataPagamento: resolvedDataPagamento,
         categoria: dto.categoria,
         project: dto.projectId ? { connect: { id: dto.projectId } } : undefined,
         client: dto.clientId ? { connect: { id: dto.clientId } } : undefined,
@@ -102,7 +119,7 @@ export class CashFlowService {
         await this.syncInstallmentItemFromCashFlow(
           existing.installmentPlanItemId,
           dto.status,
-          dto.dataPagamento ? new Date(dto.dataPagamento) : cashFlow.dataPagamento,
+          resolvedDataPagamento ?? cashFlow.dataPagamento,
         );
       }
 

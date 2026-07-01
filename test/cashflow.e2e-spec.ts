@@ -121,6 +121,8 @@ describe('CashFlow (e2e)', () => {
 
     expect(updated.body.valor).toBe(150);
 
+    expect(updated.body.dataPagamento).not.toBeNull();
+
     await request(app.getHttpServer()).delete(`/api/cashflow/${id}`).set(bearer(token)).expect(204);
 
     await request(app.getHttpServer()).get(`/api/cashflow/${id}`).set(bearer(token)).expect(404);

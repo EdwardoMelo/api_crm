@@ -1,3 +1,5 @@
+import { DashboardMonthSummaryDTOResponse } from './DashboardMonthSummaryDTOResponse';
+
 export class DashboardSummaryDTOResponse {
   receitaMes: number;
   despesaMes: number;
@@ -6,4 +8,5 @@ export class DashboardSummaryDTOResponse {
   contasPagar: number;
   clientesAtivos: number;
   projetosAtivos: number;
+  monthlyBreakdown?: DashboardMonthSummaryDTOResponse[];
 }

@@ -5,6 +5,7 @@ import { FILE_STORAGE } from '../storage/storage.interface';
 import { CashFlowRepository } from './repository/CashFlowRepository';
 import { InstallmentPlanRepository } from './repository/InstallmentPlanRepository';
 import { CashFlowService } from './service/CashFlowService';
+import { startOfToday } from './utils/cash-flow-date.utils';
 
 const buildCashFlow = (overrides: Partial<CashFlow> = {}): CashFlow =>
   ({
@@ -134,5 +135,93 @@ describe('CashFlowService', () => {
         paidAt: paymentDate,
       }),
     );
+  });
+
+  it('preenche dataPagamento ao marcar como PAGO sem data explícita', async () => {
+    repository.findById.mockResolvedValue(buildCashFlow({ status: CashFlowStatus.PENDENTE }));
+    repository.update.mockImplementation(async (_id, data) =>
+      buildCashFlow({
+        status: CashFlowStatus.PAGO,
+        dataPagamento: data.dataPagamento as Date,
+      }),
+    );
+
+    await service.update(1, { status: CashFlowStatus.PAGO });
+
+    expect(repository.update).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({
+        status: CashFlowStatus.PAGO,
+        dataPagamento: expect.any(Date),
+      }),
+    );
+    const updateCall = repository.update.mock.calls[0][1];
+    expect((updateCall.dataPagamento as Date).toDateString()).toBe(startOfToday().toDateString());
+  });
+
+  it('limpa dataPagamento ao reverter para PENDENTE', async () => {
+    const paymentDate = new Date('2026-06-15');
+    repository.findById.mockResolvedValue(
+      buildCashFlow({ status: CashFlowStatus.PAGO, dataPagamento: paymentDate }),
+    );
+    repository.update.mockResolvedValue(
+      buildCashFlow({ status: CashFlowStatus.PENDENTE, dataPagamento: null }),
+    );
+
+    await service.update(1, { status: CashFlowStatus.PENDENTE });
+
+    expect(repository.update).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({
+        status: CashFlowStatus.PENDENTE,
+        dataPagamento: null,
+      }),
+    );
+  });
+
+  it('não altera dataPagamento ao atualizar apenas valor de lançamento PAGO', async () => {
+    const paymentDate = new Date('2026-06-15');
+    repository.findById.mockResolvedValue(
+      buildCashFlow({ status: CashFlowStatus.PAGO, dataPagamento: paymentDate }),
+    );
+    repository.update.mockResolvedValue(
+      buildCashFlow({ status: CashFlowStatus.PAGO, dataPagamento: paymentDate, valor: '200' as never }),
+    );
+
+    await service.update(1, { valor: 200 });
+
+    expect(repository.update).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({
+        valor: 200,
+        dataPagamento: undefined,
+      }),
+    );
+  });
+
+  it('preenche dataPagamento ao criar lançamento já como PAGO', async () => {
+    repository.create.mockImplementation(async (data) =>
+      buildCashFlow({
+        status: CashFlowStatus.PAGO,
+        dataPagamento: data.dataPagamento as Date,
+      }),
+    );
+
+    await service.create({
+      descricao: 'Entrada paga',
+      valor: 500,
+      tipo: CashFlowType.ENTRADA,
+      status: CashFlowStatus.PAGO,
+      dataCompetencia: '2026-01-01',
+    });
+
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: CashFlowStatus.PAGO,
+        dataPagamento: expect.any(Date),
+      }),
+    );
+    const createCall = repository.create.mock.calls[0][0];
+    expect((createCall.dataPagamento as Date).toDateString()).toBe(startOfToday().toDateString());
   });
 });

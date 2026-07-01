@@ -1,5 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CashFlowStatus, CashFlowType } from '@prisma/client';
+import { CashFlowStatus, CashFlowType, Prisma } from '@prisma/client';
+import {
+  endOfDayFromDateString,
+  getYearFromFullYearRange,
+  startOfDayFromDateString,
+} from '../../cashflow/utils/cash-flow-date.utils';
+import { DashboardSummaryDTOQuery } from '../dto/request/DashboardSummaryDTOQuery';
+import { DashboardMonthSummaryDTOResponse } from '../dto/response/DashboardMonthSummaryDTOResponse';
 import { DashboardSummaryDTOResponse } from '../dto/response/DashboardSummaryDTOResponse';
 import { DashboardRepository } from '../repository/DashboardRepository';
 
@@ -9,32 +16,31 @@ export class DashboardService {
 
   constructor(private readonly dashboardRepository: DashboardRepository) {}
 
-  async getSummary(): Promise<DashboardSummaryDTOResponse> {
+  async getSummary(query?: DashboardSummaryDTOQuery): Promise<DashboardSummaryDTOResponse> {
     try {
-      const { start, end } = this.currentMonthRange();
-      const competenciaMes = { gte: start, lte: end };
+      const competenciaFilter = this.buildCompetenciaFilter(query);
 
       const [receitaMes, despesaMes, contasReceber, contasPagar, clientesAtivos, projetosAtivos] =
         await Promise.all([
           this.dashboardRepository.sumCashFlow({
             tipo: CashFlowType.ENTRADA,
             status: CashFlowStatus.PAGO,
-            dataCompetencia: competenciaMes,
+            ...(competenciaFilter && { dataCompetencia: competenciaFilter }),
           }),
           this.dashboardRepository.sumCashFlow({
             tipo: CashFlowType.SAIDA,
             status: CashFlowStatus.PAGO,
-            dataCompetencia: competenciaMes,
+            ...(competenciaFilter && { dataCompetencia: competenciaFilter }),
           }),
           this.dashboardRepository.sumCashFlow({
             tipo: CashFlowType.ENTRADA,
             status: CashFlowStatus.PENDENTE,
-            dataCompetencia: competenciaMes,
+            ...(competenciaFilter && { dataCompetencia: competenciaFilter }),
           }),
           this.dashboardRepository.sumCashFlow({
             tipo: CashFlowType.SAIDA,
             status: CashFlowStatus.PENDENTE,
-            dataCompetencia: competenciaMes,
+            ...(competenciaFilter && { dataCompetencia: competenciaFilter }),
           }),
           this.dashboardRepository.countClients(),
           this.dashboardRepository.countActiveProjects(),
@@ -48,6 +54,12 @@ export class DashboardService {
       summary.contasPagar = contasPagar;
       summary.clientesAtivos = clientesAtivos;
       summary.projetosAtivos = projetosAtivos;
+
+      const year = this.getFullYearFromQuery(query);
+      if (year !== null) {
+        summary.monthlyBreakdown = await this.buildMonthlyBreakdown(year);
+      }
+
       return summary;
     } catch (error) {
       this.logger.error('Erro ao montar resumo do dashboard', (error as Error).stack);
@@ -55,10 +67,46 @@ export class DashboardService {
     }
   }
 
-  private currentMonthRange(): { start: Date; end: Date } {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    return { start, end };
+  private buildCompetenciaFilter(
+    query?: DashboardSummaryDTOQuery,
+  ): Prisma.DateTimeFilter | undefined {
+    if (!query?.periodStart && !query?.periodEnd) {
+      return undefined;
+    }
+
+    const filter: Prisma.DateTimeFilter = {};
+    if (query.periodStart) {
+      filter.gte = startOfDayFromDateString(query.periodStart);
+    }
+    if (query.periodEnd) {
+      filter.lte = endOfDayFromDateString(query.periodEnd);
+    }
+    return filter;
+  }
+
+  private getFullYearFromQuery(query?: DashboardSummaryDTOQuery): number | null {
+    if (!query?.periodStart || !query?.periodEnd) {
+      return null;
+    }
+    return getYearFromFullYearRange(query.periodStart, query.periodEnd);
+  }
+
+  private async buildMonthlyBreakdown(
+    year: number,
+  ): Promise<DashboardMonthSummaryDTOResponse[]> {
+    const [receitas, despesas] = await Promise.all([
+      this.dashboardRepository.sumCashFlowByMonth(year, CashFlowType.ENTRADA, CashFlowStatus.PAGO),
+      this.dashboardRepository.sumCashFlowByMonth(year, CashFlowType.SAIDA, CashFlowStatus.PAGO),
+    ]);
+
+    return receitas.map((receita, index) => {
+      const despesa = despesas[index] ?? 0;
+      const item = new DashboardMonthSummaryDTOResponse();
+      item.month = index + 1;
+      item.receita = receita;
+      item.despesa = despesa;
+      item.lucro = Number((receita - despesa).toFixed(2));
+      return item;
+    });
   }
 }

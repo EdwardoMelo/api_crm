@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BusinessRuleException, EntityNotFoundException } from '../../../common/exceptions';
-import { EmailTemplateVariableKey } from '../constants/email-template-variables.constants';
+import { EntityNotFoundException } from '../../../common/exceptions';
 import {
   CreateEmailTemplateDTORequest,
   PreviewEmailTemplateBodyDTORequest,
@@ -94,17 +93,5 @@ export class EmailTemplateService {
     response.corpo = preview.corpo;
     response.variaveis = preview.variaveis;
     return response;
-  }
-
-  async createFromDetected(
-    nome: string,
-    assunto: string,
-    corpo: string,
-    variaveis: EmailTemplateVariableKey[],
-  ): Promise<EmailTemplateDTOResponse> {
-    if (!nome.trim()) {
-      throw new BusinessRuleException('Informe um nome para o template.');
-    }
-    return this.create({ nome, assunto, corpo, variaveis });
   }
 }

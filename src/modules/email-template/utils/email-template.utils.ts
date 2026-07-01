@@ -85,6 +85,14 @@ export function buildEmailTemplateVariableMap(
 
 const PLACEHOLDER_PATTERN = /\{\{([a-zA-Z0-9_.]+)\}\}/g;
 
+export function extractEmailTemplatePlaceholderKeys(text: string): string[] {
+  const keys = new Set<string>();
+  for (const match of text.matchAll(PLACEHOLDER_PATTERN)) {
+    keys.add(match[1]);
+  }
+  return [...keys];
+}
+
 export function resolveEmailTemplate(
   text: string,
   context: EmailTemplateVariableContext,

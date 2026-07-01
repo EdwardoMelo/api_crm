@@ -18,12 +18,18 @@ import {
   CreateEmailTemplateDTORequest,
   UpdateEmailTemplateDTORequest,
 } from '../dto/request/EmailTemplateDTORequest';
+import { SuggestEmailTemplateDTORequest } from '../dto/request/SuggestEmailTemplateDTORequest';
 import { EmailTemplateDTOResponse } from '../dto/response/EmailTemplateDTOResponse';
+import { SuggestEmailTemplateDTOResponse } from '../dto/response/SuggestEmailTemplateDTOResponse';
 import { EmailTemplateService } from '../service/EmailTemplateService';
+import { EmailTemplateSuggestionService } from '../service/EmailTemplateSuggestionService';
 
 @Controller('email-templates')
 export class EmailTemplateController {
-  constructor(private readonly templateService: EmailTemplateService) {}
+  constructor(
+    private readonly templateService: EmailTemplateService,
+    private readonly suggestionService: EmailTemplateSuggestionService,
+  ) {}
 
   @Get('variables')
   listVariables(): { key: string; label: string }[] {
@@ -36,6 +42,13 @@ export class EmailTemplateController {
   @Get()
   findAll(): Promise<EmailTemplateDTOResponse[]> {
     return this.templateService.findAll();
+  }
+
+  @Post('suggest')
+  suggest(
+    @Body() dto: SuggestEmailTemplateDTORequest,
+  ): Promise<SuggestEmailTemplateDTOResponse> {
+    return this.suggestionService.suggest(dto);
   }
 
   @Get(':id')

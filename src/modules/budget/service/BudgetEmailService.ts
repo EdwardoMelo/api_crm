@@ -9,7 +9,6 @@ import { EmailTemplatePreviewDTOResponse } from '../../email-template/dto/respon
 import { EmailTemplateService } from '../../email-template/service/EmailTemplateService';
 import { EmailTemplateVariableContext } from '../../email-template/types/variable-context.types';
 import {
-  detectEmailTemplateVariables,
   formatCurrency,
   formatDate,
   plainTextToHtml,
@@ -137,16 +136,6 @@ export class BudgetEmailService {
       budget.status === BudgetStatus.ENVIADO
     ) {
       await this.budgetRepository.update(budgetId, { status: BudgetStatus.ENVIADO });
-    }
-
-    if (dto.saveAsTemplate) {
-      const preview = detectEmailTemplateVariables(dto.assunto, dto.corpo, context, linkArquivo);
-      await this.templateService.createFromDetected(
-        dto.templateNome ?? `Template ${budget.titulo}`,
-        preview.assunto,
-        preview.corpo,
-        preview.variaveis,
-      );
     }
 
     const result = new SendBudgetEmailResultDTOResponse();

@@ -5,6 +5,7 @@ import { EMAIL_TEMPLATE_TONE_PROMPTS } from '../constants/email-template-tone.co
 import {
   EMAIL_TEMPLATE_SUGGESTION_CONTEXT_RULES,
   EMAIL_TEMPLATE_SUGGESTION_EXAMPLES,
+  EMAIL_TEMPLATE_SUGGESTION_IMPROVE_RULES,
   EMAIL_TEMPLATE_SUGGESTION_QUALITY_RULES,
   EMAIL_TEMPLATE_SUGGESTION_SYSTEM_PROMPT,
   EMAIL_TEMPLATE_SUGGESTION_VARIABLE_USAGE_RULES,
@@ -28,8 +29,10 @@ export class EmailTemplateSuggestionService {
   constructor(private readonly gemini: GeminiService) {}
 
   async suggest(dto: SuggestEmailTemplateDTORequest): Promise<SuggestEmailTemplateDTOResponse> {
+    this.validateModeFields(dto);
     const allowedKeys = this.validateVariableKeys(dto);
-    const userPrompt = this.buildUserPrompt(dto);
+    const userPrompt =
+      dto.mode === 'improve' ? this.buildImprovePrompt(dto) : this.buildGeneratePrompt(dto);
 
     let result = await this.requestSuggestion(userPrompt);
 
@@ -57,6 +60,18 @@ export class EmailTemplateSuggestionService {
     return SuggestEmailTemplateDTOResponse.build({ assunto, corpo, variaveis });
   }
 
+  private validateModeFields(dto: SuggestEmailTemplateDTORequest): void {
+    if (dto.mode === 'improve') {
+      const hasAssunto = Boolean(dto.assuntoDraft?.trim());
+      const hasCorpo = Boolean(dto.corpoDraft?.trim());
+      if (!hasAssunto && !hasCorpo) {
+        throw new BusinessRuleException(
+          'Informe um rascunho no assunto ou no corpo para melhorar o template.',
+        );
+      }
+    }
+  }
+
   private validateVariableKeys(dto: SuggestEmailTemplateDTORequest): EmailTemplateVariableKey[] {
     const keys: EmailTemplateVariableKey[] = [];
 
@@ -70,7 +85,7 @@ export class EmailTemplateSuggestionService {
     return keys;
   }
 
-  private buildUserPrompt(dto: SuggestEmailTemplateDTORequest): string {
+  private buildGeneratePrompt(dto: SuggestEmailTemplateDTORequest): string {
     const toneDescription = EMAIL_TEMPLATE_TONE_PROMPTS[dto.tone];
     const variableList = this.formatVariablesByRole(dto);
 
@@ -86,6 +101,34 @@ ${EMAIL_TEMPLATE_SUGGESTION_EXAMPLES}
 
 ## Variáveis obrigatórias
 Use TODAS abaixo, com o papel correto (remetente, destinatário ou orçamento):
+${variableList}`;
+  }
+
+  private buildImprovePrompt(dto: SuggestEmailTemplateDTORequest): string {
+    const toneDescription = EMAIL_TEMPLATE_TONE_PROMPTS[dto.tone];
+    const variableList = this.formatVariablesByRole(dto);
+    const assuntoDraft = dto.assuntoDraft?.trim() ?? '';
+    const corpoDraft = dto.corpoDraft?.trim() ?? '';
+
+    return `${toneDescription}
+
+${EMAIL_TEMPLATE_SUGGESTION_IMPROVE_RULES}
+
+${EMAIL_TEMPLATE_SUGGESTION_CONTEXT_RULES}
+
+${EMAIL_TEMPLATE_SUGGESTION_VARIABLE_USAGE_RULES}
+
+${EMAIL_TEMPLATE_SUGGESTION_QUALITY_RULES}
+
+${EMAIL_TEMPLATE_SUGGESTION_EXAMPLES}
+
+## Rascunho atual do usuário
+Assunto: ${assuntoDraft || '(vazio)'}
+Corpo:
+${corpoDraft}
+
+## Variáveis permitidas
+Use APENAS estas variáveis (inclua as obrigatórias que ainda faltam no rascunho):
 ${variableList}`;
   }
 

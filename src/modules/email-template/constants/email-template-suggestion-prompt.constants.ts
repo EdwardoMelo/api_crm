@@ -64,3 +64,15 @@ export const EMAIL_TEMPLATE_VARIABLE_ROLE_LABELS: Record<string, string> = {
   cliente: 'Destinatário — cliente que recebe o e-mail',
   orcamento: 'Objeto — dados do orçamento apresentado ao cliente',
 };
+
+export const EMAIL_TEMPLATE_SUGGESTION_IMPROVE_RULES = `## Modo: melhorar rascunho existente
+O usuário já escreveu (ou gerou) um rascunho parcial. Sua tarefa é MELHORAR esse texto, não descartá-lo.
+
+Regras específicas:
+1. Preserve a intenção e o conteúdo essencial do rascunho do usuário.
+2. Melhore clareza, fluidez, tom e estrutura conforme o tom solicitado.
+3. Mantenha placeholders {{chave}} válidos que já existem no rascunho.
+4. Inclua variáveis obrigatórias da lista que ainda não aparecem no rascunho, de forma natural.
+5. Não remova informações relevantes que o usuário já incluiu.
+6. Se o assunto do rascunho estiver vazio, crie um assunto adequado; se existir, melhore-o.
+7. O resultado deve ser um template completo e pronto para uso, não apenas pequenas correções pontuais.`;

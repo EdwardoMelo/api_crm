@@ -57,4 +57,24 @@ describe('EmployeeRepository', () => {
 
     expect(prisma.employee.findFirst).toHaveBeenCalledWith({ where: { id: 1, tenantId: 1 } });
   });
+
+  it('create conecta tenant', async () => {
+    prisma.employee.create.mockResolvedValue({ id: 1 });
+    await repository.create({ nome: 'Ana' } as never);
+    expect(prisma.employee.create).toHaveBeenCalled();
+  });
+
+  it('findAll aplica ordenacao', async () => {
+    prisma.employee.findMany.mockResolvedValue([]);
+    await repository.findAll({ sortBy: 'nome', sortOrder: 'asc' } as never);
+    expect(prisma.employee.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: expect.anything() }),
+    );
+  });
+
+  it('delete delega para prisma', async () => {
+    prisma.employee.delete.mockResolvedValue({ id: 1 });
+    await repository.delete(1);
+    expect(prisma.employee.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+  });
 });

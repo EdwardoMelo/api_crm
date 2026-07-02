@@ -89,5 +89,62 @@ describe('BudgetService', () => {
       repository.findById.mockResolvedValue(null);
       await expect(service.convertToProject(999)).rejects.toBeInstanceOf(EntityNotFoundException);
     });
+
+    it('falha se reprovado', async () => {
+      repository.findById.mockResolvedValue(buildBudget({ status: BudgetStatus.REPROVADO }));
+      await expect(service.convertToProject(1)).rejects.toBeInstanceOf(BusinessRuleException);
+    });
+
+    it('propaga erro ao converter', async () => {
+      repository.findById.mockResolvedValue(buildBudget());
+      projectService.create.mockRejectedValue(new Error('db'));
+      await expect(service.convertToProject(1)).rejects.toThrow('db');
+    });
+  });
+
+  it('findAll retorna lista', async () => {
+    repository.findAll.mockResolvedValue([buildBudget()]);
+    expect(await service.findAll()).toHaveLength(1);
+  });
+
+  it('findAll propaga erro', async () => {
+    repository.findAll.mockRejectedValue(new Error('db'));
+    await expect(service.findAll()).rejects.toThrow('db');
+  });
+
+  it('findById retorna orçamento', async () => {
+    repository.findById.mockResolvedValue(buildBudget());
+    expect((await service.findById(1)).id).toBe(1);
+  });
+
+  it('update retorna orçamento atualizado', async () => {
+    repository.findById.mockResolvedValue(buildBudget());
+    repository.update.mockResolvedValue(buildBudget({ titulo: 'Novo' }));
+    expect((await service.update(1, { titulo: 'Novo' })).titulo).toBe('Novo');
+  });
+
+  it('update propaga erro', async () => {
+    repository.findById.mockResolvedValue(buildBudget());
+    repository.update.mockRejectedValue(new Error('db'));
+    await expect(service.update(1, {})).rejects.toThrow('db');
+  });
+
+  it('remove exclui orçamento', async () => {
+    repository.findById.mockResolvedValue(buildBudget());
+    await service.remove(1);
+    expect(repository.delete).toHaveBeenCalledWith(1);
+  });
+
+  it('remove propaga erro', async () => {
+    repository.findById.mockResolvedValue(buildBudget());
+    repository.delete.mockRejectedValue(new Error('db'));
+    await expect(service.remove(1)).rejects.toThrow('db');
+  });
+
+  it('create propaga erro', async () => {
+    repository.create.mockRejectedValue(new Error('db'));
+    await expect(
+      service.create({ clienteId: 10, titulo: 'x', valor: 1 }),
+    ).rejects.toThrow('db');
   });
 });

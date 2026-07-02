@@ -1,5 +1,6 @@
 import { CashFlow } from '@prisma/client';
-import { CashFlowSortField, SortOrder } from '../constants/cash-flow-sort.constants';
+import { SortOrder } from '../../../common/sorting/sort-order.enum';
+import { CashFlowSortField } from '../constants/cash-flow-sort.constants';
 import {
   buildCashFlowPrismaOrderBy,
   requiresInMemoryCashFlowSort,

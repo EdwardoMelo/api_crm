@@ -62,4 +62,47 @@ describe('EmployeeService', () => {
     const result = await service.findById(1);
     expect(result.salarioBase).toBe(8000);
   });
+
+  it('findAll retorna lista', async () => {
+    repository.findAll.mockResolvedValue([buildEmployee()]);
+    const result = await service.findAll({} as never);
+    expect(result).toHaveLength(1);
+  });
+
+  it('findAll propaga erro', async () => {
+    repository.findAll.mockRejectedValue(new Error('db'));
+    await expect(service.findAll()).rejects.toThrow('db');
+  });
+
+  it('create propaga erro', async () => {
+    repository.create.mockRejectedValue(new Error('db'));
+    await expect(
+      service.create({ nome: 'x', email: 'x@t.com', tipoContratacao: TipoContratacao.CLT }),
+    ).rejects.toThrow('db');
+  });
+
+  it('update retorna funcionario atualizado', async () => {
+    repository.findById.mockResolvedValue(buildEmployee());
+    repository.update.mockResolvedValue(buildEmployee({ nome: 'Novo' }));
+    const result = await service.update(1, { nome: 'Novo' });
+    expect(result.nome).toBe('Novo');
+  });
+
+  it('update propaga erro', async () => {
+    repository.findById.mockResolvedValue(buildEmployee());
+    repository.update.mockRejectedValue(new Error('db'));
+    await expect(service.update(1, { nome: 'Novo' })).rejects.toThrow('db');
+  });
+
+  it('remove exclui funcionario', async () => {
+    repository.findById.mockResolvedValue(buildEmployee());
+    await service.remove(1);
+    expect(repository.delete).toHaveBeenCalledWith(1);
+  });
+
+  it('remove propaga erro', async () => {
+    repository.findById.mockResolvedValue(buildEmployee());
+    repository.delete.mockRejectedValue(new Error('db'));
+    await expect(service.remove(1)).rejects.toThrow('db');
+  });
 });

@@ -54,7 +54,7 @@ describe('ClientController (integração)', () => {
 
   it('GET /clients lista', async () => {
     repository.findAll.mockResolvedValue([buildClient()]);
-    const result = await controller.findAll();
+    const result = await controller.findAll({});
     expect(result).toHaveLength(1);
   });
 

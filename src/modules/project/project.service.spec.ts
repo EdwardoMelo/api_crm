@@ -173,4 +173,68 @@ describe('ProjectService', () => {
     expect(fileStorage.delete).toHaveBeenCalled();
     expect(repository.delete).toHaveBeenCalledWith(1);
   });
+
+  it('findAll retorna lista', async () => {
+    repository.findAll.mockResolvedValue([buildProject()]);
+    expect(await service.findAll()).toHaveLength(1);
+  });
+
+  it('findAll propaga erro', async () => {
+    repository.findAll.mockRejectedValue(new Error('db'));
+    await expect(service.findAll()).rejects.toThrow('db');
+  });
+
+  it('update retorna projeto atualizado', async () => {
+    repository.findById.mockResolvedValue(buildProject());
+    repository.update.mockResolvedValue(buildProject({ titulo: 'Novo' }));
+    expect((await service.update(1, { titulo: 'Novo' })).titulo).toBe('Novo');
+  });
+
+  it('update propaga erro', async () => {
+    repository.findById.mockResolvedValue(buildProject());
+    repository.update.mockRejectedValue(new Error('db'));
+    await expect(service.update(1, {})).rejects.toThrow('db');
+  });
+
+  it('create propaga erro', async () => {
+    repository.create.mockRejectedValue(new Error('db'));
+    await expect(service.create({ clienteId: 10, titulo: 'x', valorTotal: 1 })).rejects.toThrow(
+      'db',
+    );
+  });
+
+  it('addFile propaga erro de upload', async () => {
+    repository.findById.mockResolvedValue(buildProject());
+    fileStorage.upload.mockRejectedValue(new Error('storage'));
+    await expect(service.addFile(1, buildMulterFile())).rejects.toThrow('storage');
+  });
+
+  it('deleteFile lança quando arquivo não existe', async () => {
+    repository.findById.mockResolvedValue(buildProject());
+    fileRepository.findById.mockResolvedValue(null);
+    await expect(service.deleteFile(1, 99)).rejects.toBeInstanceOf(EntityNotFoundException);
+  });
+
+  it('deleteFile propaga erro', async () => {
+    repository.findById.mockResolvedValue(buildProject());
+    fileRepository.findById.mockResolvedValue(buildFile());
+    fileStorage.delete.mockRejectedValue(new Error('storage'));
+    await expect(service.deleteFile(1, 1)).rejects.toThrow('storage');
+  });
+
+  it('remove propaga erro', async () => {
+    repository.findById.mockResolvedValue(buildProject());
+    fileRepository.findByProjectId.mockResolvedValue([]);
+    repository.delete.mockRejectedValue(new Error('db'));
+    await expect(service.remove(1)).rejects.toThrow('db');
+  });
+
+  it('remove continua se delete de arquivo falhar', async () => {
+    repository.findById.mockResolvedValue(buildProject());
+    fileRepository.findByProjectId.mockResolvedValue([buildFile()]);
+    fileStorage.delete.mockRejectedValue(new Error('storage fail'));
+    repository.delete.mockResolvedValue(buildProject());
+    await service.remove(1);
+    expect(repository.delete).toHaveBeenCalledWith(1);
+  });
 });

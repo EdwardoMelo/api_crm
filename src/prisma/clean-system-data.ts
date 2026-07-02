@@ -31,6 +31,10 @@ export async function cleanSystemData(prisma: PrismaClient): Promise<void> {
 
   const tenantFilter = { tenantId: { in: tenantIds } };
 
+  await prisma.asaas_webhook_events.deleteMany({ where: tenantFilter });
+  await prisma.billing_payments.deleteMany({ where: tenantFilter });
+  await prisma.tenant_subscriptions.deleteMany({ where: tenantFilter });
+  await prisma.tenant_billing_accounts.deleteMany({ where: tenantFilter });
   await prisma.project_files.deleteMany({ where: tenantFilter });
   await prisma.budget_files.deleteMany({ where: tenantFilter });
   await prisma.email_templates.deleteMany({ where: tenantFilter });

@@ -194,34 +194,45 @@ model EmailLog {
 }
 
 model tenants {
-  id                   Int                   @id @default(autoincrement())
-  nome                 String
-  slug                 String                @unique
-  ativo                Boolean               @default(true)
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime
-  tipo                 tenants_tipo          @default(EMPRESA)
-  createdBy            String                @default("system") @db.VarChar(20)
-  updatedBy            String                @default("system") @db.VarChar(20)
-  budget_files         budget_files[]
-  budgets              Budget[]
-  cash_flows           CashFlow[]
-  clients              Client[]
-  email_logs           EmailLog[]
-  email_templates      email_templates[]
-  employees            Employee[]
-  fixedExpenses        FixedExpense[]
-  fixedIncomes         FixedIncome[]
-  installmentPlanItems InstallmentPlanItem[]
-  installmentPlans     InstallmentPlan[]
-  project_files        project_files[]
-  projects             Project[]
-  tenant_fiscal_info   tenant_fiscal_info?
-  users                users[]
+  id                      Int                      @id @default(autoincrement())
+  nome                    String
+  slug                    String                   @unique
+  ativo                   Boolean                  @default(true)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime
+  tipo                    tenants_tipo             @default(EMPRESA)
+  createdBy               String                   @default("system") @db.VarChar(20)
+  updatedBy               String                   @default("system") @db.VarChar(20)
+  accessExpiresAt         DateTime?
+  billingStatus           tenants_billingStatus    @default(TRIAL)
+  billingPlanId           Int?
+  asaas_webhook_events    asaas_webhook_events[]
+  billing_payments        billing_payments[]
+  budget_files            budget_files[]
+  budgets                 Budget[]
+  cash_flows              CashFlow[]
+  clients                 Client[]
+  email_logs              EmailLog[]
+  email_templates         email_templates[]
+  employees               Employee[]
+  fixedExpenses           FixedExpense[]
+  fixedIncomes            FixedIncome[]
+  installmentPlanItems    InstallmentPlanItem[]
+  installmentPlans        InstallmentPlan[]
+  project_files           project_files[]
+  projects                Project[]
+  tenant_billing_accounts tenant_billing_accounts?
+  tenant_fiscal_info      tenant_fiscal_info?
+  tenant_subscriptions    tenant_subscriptions?
+  billing_plans           billing_plans?           @relation(fields: [billingPlanId], references: [id])
+  users                   users[]
 
   @@index([ativo])
   @@index([nome])
   @@index([createdBy])
+  @@index([accessExpiresAt])
+  @@index([billingPlanId])
+  @@index([billingStatus])
 }
 
 model users {
@@ -448,6 +459,140 @@ model email_templates {
   @@unique([tenantId, nome])
 }
 
+model asaas_webhook_events {
+  id               Int                         @id @default(autoincrement())
+  asaasEventId     String                      @unique @db.VarChar(120)
+  eventType        String                      @db.VarChar(80)
+  tenantId         Int?
+  billingPaymentId Int?
+  payload          String                      @db.LongText
+  status           asaas_webhook_events_status @default(PENDING)
+  errorMessage     String?                     @db.VarChar(500)
+  receivedAt       DateTime                    @default(now())
+  processedAt      DateTime?
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime
+  createdBy        String                      @default("system") @db.VarChar(20)
+  updatedBy        String                      @default("system") @db.VarChar(20)
+  billing_payments billing_payments?           @relation(fields: [billingPaymentId], references: [id])
+  tenants          tenants?                    @relation(fields: [tenantId], references: [id])
+
+  @@index([billingPaymentId])
+  @@index([eventType])
+  @@index([receivedAt])
+  @@index([status])
+  @@index([tenantId])
+  @@index([createdBy])
+}
+
+model billing_payments {
+  id                   Int                          @id @default(autoincrement())
+  tenantId             Int
+  tenantSubscriptionId Int?
+  billingPlanId        Int
+  asaasPaymentId       String?                      @unique @db.VarChar(40)
+  asaasSubscriptionId  String?                      @db.VarChar(40)
+  asaasCustomerId      String                       @db.VarChar(40)
+  externalReference    String                       @unique @db.VarChar(80)
+  billingType          billing_payments_billingType
+  amount               Decimal                      @db.Decimal(12, 2)
+  status               String                       @default("PENDING") @db.VarChar(40)
+  dueDate              DateTime                     @db.Date
+  paidAt               DateTime?
+  periodStart          DateTime?
+  periodEnd            DateTime?
+  invoiceUrl           String?                      @db.VarChar(512)
+  bankSlipUrl          String?                      @db.VarChar(512)
+  failureCode          String?                      @db.VarChar(80)
+  failureMessage       String?                      @db.VarChar(500)
+  failedAt             DateTime?
+  lastAsaasEvent       String?                      @db.VarChar(80)
+  accessGranted        Boolean                      @default(false)
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime
+  createdBy            String                       @default("system") @db.VarChar(20)
+  updatedBy            String                       @default("system") @db.VarChar(20)
+  asaas_webhook_events asaas_webhook_events[]
+  billing_plans        billing_plans                @relation(fields: [billingPlanId], references: [id])
+  tenants              tenants                      @relation(fields: [tenantId], references: [id])
+  tenant_subscriptions tenant_subscriptions?        @relation(fields: [tenantSubscriptionId], references: [id])
+
+  @@index([asaasSubscriptionId])
+  @@index([billingPlanId])
+  @@index([createdBy])
+  @@index([dueDate])
+  @@index([status])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantSubscriptionId])
+}
+
+model billing_plans {
+  id                   Int                    @id @default(autoincrement())
+  code                 String                 @unique @db.VarChar(50)
+  name                 String                 @db.VarChar(120)
+  amount               Decimal                @db.Decimal(12, 2)
+  currency             String                 @default("BRL") @db.Char(3)
+  intervalDays         Int                    @default(30)
+  asaasCycle           String                 @default("MONTHLY") @db.VarChar(20)
+  active               Boolean                @default(true)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime
+  createdBy            String                 @default("system") @db.VarChar(20)
+  updatedBy            String                 @default("system") @db.VarChar(20)
+  billing_payments     billing_payments[]
+  tenant_subscriptions tenant_subscriptions[]
+  tenants              tenants[]
+
+  @@index([active])
+  @@index([createdBy])
+}
+
+model tenant_billing_accounts {
+  id                Int      @id @default(autoincrement())
+  tenantId          Int      @unique
+  asaasCustomerId   String   @unique @db.VarChar(40)
+  externalReference String   @unique @db.VarChar(80)
+  cpfCnpj           String?  @db.VarChar(14)
+  email             String?  @db.VarChar(180)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime
+  createdBy         String   @default("system") @db.VarChar(20)
+  updatedBy         String   @default("system") @db.VarChar(20)
+  tenants           tenants  @relation(fields: [tenantId], references: [id])
+
+  @@index([createdBy])
+}
+
+model tenant_subscriptions {
+  id                  Int                               @id @default(autoincrement())
+  tenantId            Int                               @unique
+  billingPlanId       Int
+  asaasSubscriptionId String?                           @unique @db.VarChar(40)
+  asaasCustomerId     String                            @db.VarChar(40)
+  externalReference   String                            @unique @db.VarChar(80)
+  status              tenant_subscriptions_status       @default(ACTIVE)
+  autoRenewEnabled    Boolean                           @default(false)
+  billingType         tenant_subscriptions_billingType?
+  amount              Decimal                           @db.Decimal(12, 2)
+  nextDueDate         DateTime?                         @db.Date
+  currentPeriodStart  DateTime?
+  currentPeriodEnd    DateTime?
+  cancelledAt         DateTime?
+  createdAt           DateTime                          @default(now())
+  updatedAt           DateTime
+  createdBy           String                            @default("system") @db.VarChar(20)
+  updatedBy           String                            @default("system") @db.VarChar(20)
+  billing_payments    billing_payments[]
+  billing_plans       billing_plans                     @relation(fields: [billingPlanId], references: [id])
+  tenants             tenants                           @relation(fields: [tenantId], references: [id])
+
+  @@index([asaasCustomerId])
+  @@index([billingPlanId])
+  @@index([createdBy])
+  @@index([status])
+}
+
 enum TipoContratacao {
   CLT
   PJ
@@ -523,4 +668,40 @@ enum users_role {
 enum email_logs_modoAnexo {
   ANEXO
   LINK
+}
+
+enum tenant_subscriptions_status {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum asaas_webhook_events_status {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+enum tenant_subscriptions_billingType {
+  CREDIT_CARD
+  PIX
+  BOLETO
+  UNDEFINED
+}
+
+enum billing_payments_billingType {
+  CREDIT_CARD
+  PIX
+  BOLETO
+  UNDEFINED
+}
+
+enum tenants_billingStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  EXPIRED
+  CANCELLED
 }

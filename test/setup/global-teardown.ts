@@ -1,5 +1,7 @@
 import { config } from 'dotenv';
 import { PrismaClient } from '@prisma/client';
+
+import { assertTestDatabase, getTestDatabaseUrl } from '../../src/prisma/assert-test-database';
 import { cleanSystemData } from '../../src/prisma/clean-system-data';
 
 /**
@@ -9,10 +11,13 @@ import { cleanSystemData } from '../../src/prisma/clean-system-data';
 export default async function globalTeardown(): Promise<void> {
   config();
 
-  const testUrl = process.env.DATABASE_TEST_URL;
-  if (!testUrl) {
-    return;
-  }
+  process.env.E2E_RUNNING = 'true';
+  process.env.USE_TEST_DB = 'true';
+  process.env.NODE_ENV = 'test';
+  process.env.DATABASE_DEV_URL ??= process.env.DATABASE_URL;
+
+  const testUrl = getTestDatabaseUrl();
+  assertTestDatabase();
 
   const prisma = new PrismaClient({ datasources: { db: { url: testUrl } } });
   try {

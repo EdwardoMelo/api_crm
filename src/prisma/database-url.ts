@@ -1,11 +1,14 @@
 /**
  * Resolve qual banco usar com base no ambiente, sem precisar editar o .env.
  *
- * - NODE_ENV === 'test' (ou USE_TEST_DB === 'true') -> DATABASE_TEST_URL
- * - caso contrário                                   -> DATABASE_URL
+ * - NODE_ENV === 'test' (ou USE_TEST_DB / E2E_RUNNING === 'true') -> DATABASE_TEST_URL
+ * - caso contrário                                                 -> DATABASE_URL
  */
 export function resolveDatabaseUrl(): string {
-  const useTestDatabase = process.env.NODE_ENV === 'test' || process.env.USE_TEST_DB === 'true';
+  const useTestDatabase =
+    process.env.NODE_ENV === 'test' ||
+    process.env.USE_TEST_DB === 'true' ||
+    process.env.E2E_RUNNING === 'true';
 
   const url = useTestDatabase ? process.env.DATABASE_TEST_URL : process.env.DATABASE_URL;
 

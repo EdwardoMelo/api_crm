@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { assertTestDatabase } from './assert-test-database';
 import { resolveDatabaseUrl } from './database-url';
 import { cleanSystemData } from './clean-system-data';
 
@@ -40,6 +41,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     if (process.env.NODE_ENV === 'production') {
       throw new Error('cleanDatabase não pode ser executado em produção.');
     }
+    assertTestDatabase();
     await cleanSystemData(this);
   }
 }

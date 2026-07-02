@@ -79,7 +79,7 @@ npm run start:dev
 
 A aplicação resolve qual banco usar **sozinha**, sem precisar editar o `.env`:
 
-- `NODE_ENV=test` (ou `USE_TEST_DB=true`) → usa `DATABASE_TEST_URL`
+- `NODE_ENV=test` (ou `USE_TEST_DB=true` ou `E2E_RUNNING=true`) → usa `DATABASE_TEST_URL`
 - caso contrário → usa `DATABASE_URL`
 
 Isso vale para o `PrismaService` (runtime), para o `seed` e para os testes E2E.
@@ -101,9 +101,40 @@ O `.env` permanece intacto.
 ```bash
 npm test          # unitários (services e repositories) + integração (controllers)
 npm run test:cov  # com cobertura
-npm run test:e2e  # E2E (usa DATABASE_TEST_URL; aplica migrations e seed automaticamente)
+npm run test:e2e  # E2E (API local + ngrok + banco de testes)
 ```
 
-Os testes E2E sobem a aplicação isolada, usam **exclusivamente** o
-`DATABASE_TEST_URL`, aplicam migrations + seed no início e limpam o banco ao final.
+### Pré-requisitos do `test:e2e`
+
+1. `DATABASE_TEST_URL` definida e **diferente** de `DATABASE_URL`
+2. Túnel ngrok ativo apontando para `PORT` (padrão `5001`):
+
+```bash
+ngrok http 5001
+```
+
+O orquestrador (`scripts/run-e2e.js`) valida o túnel via `NGROK_API_URL`
+(padrão `http://127.0.0.1:4040/api/tunnels`), sobe a API local com banco de
+testes, confirma que o ngrok alcança a aplicação e só então executa o Jest.
+
+Os testes E2E **sempre** usam exclusivamente o `DATABASE_TEST_URL`, independente
+do ambiente externo (`NODE_ENV`, CI, etc.). O script força `NODE_ENV=test`,
+`USE_TEST_DB=true` e `E2E_RUNNING=true`.
+
+Variáveis injetadas durante a suíte (para specs que precisem de URL externa):
+
+- `E2E_NGROK_URL` — URL pública do túnel (ex.: `https://....ngrok-free.dev`)
+- `E2E_SERVER_URL` — API local (ex.: `http://127.0.0.1:5001`)
+
+Helpers: `test/setup/e2e-infra.helper.ts` (`getE2eNgrokUrl`, `getE2eServerUrl`).
+
+**Fluxo E2E:**
+
+1. Orquestrador: valida ngrok → inicia API local → executa Jest
+2. Início da suíte (Jest): `migrate deploy` + seed no banco de testes
+3. Cada teste: limpa dados de seed/e2e e recria fixture mínima (tenant + admin)
+4. Fim da suíte: remove tenants com `createdBy = 'system'`, contas `@daitx.test`
+   e todos os dados vinculados (incluindo billing e webhooks Asaas)
+5. Orquestrador: encerra a API local
+
 O banco de desenvolvimento nunca é utilizado nos testes.

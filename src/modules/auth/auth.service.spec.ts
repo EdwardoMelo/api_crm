@@ -31,6 +31,8 @@ describe('AuthService', () => {
       nome: 'Empresa Demo',
       slug: 'empresa-demo',
       ativo: true,
+      billingStatus: 'TRIAL' as const,
+      accessExpiresAt: null,
     },
   };
 

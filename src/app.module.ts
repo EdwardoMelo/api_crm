@@ -15,6 +15,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { TenantFiscalModule } from './modules/tenant-fiscal/tenant-fiscal.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { BillingModule } from './modules/billing/billing.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AdminModule } from './modules/admin/admin.module';
     StorageModule,
     TenantFiscalModule,
     AdminModule,
+    BillingModule,
   ],
 })
 export class AppModule {}

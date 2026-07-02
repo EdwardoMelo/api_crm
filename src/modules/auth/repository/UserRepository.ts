@@ -11,7 +11,14 @@ export class UserRepository {
       where: { email },
       include: {
         tenants: {
-          select: { id: true, nome: true, slug: true, ativo: true },
+          select: {
+            id: true,
+            nome: true,
+            slug: true,
+            ativo: true,
+            billingStatus: true,
+            accessExpiresAt: true,
+          },
         },
       },
     });
@@ -22,7 +29,14 @@ export class UserRepository {
       where: { id },
       include: {
         tenants: {
-          select: { id: true, nome: true, slug: true, ativo: true },
+          select: {
+            id: true,
+            nome: true,
+            slug: true,
+            ativo: true,
+            billingStatus: true,
+            accessExpiresAt: true,
+          },
         },
       },
     });

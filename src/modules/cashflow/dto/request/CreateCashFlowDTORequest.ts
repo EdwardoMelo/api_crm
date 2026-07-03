@@ -54,4 +54,8 @@ export class CreateCashFlowDTORequest {
   @IsOptional()
   @IsInt()
   employeeId?: number;
+
+  @IsOptional()
+  @IsInt()
+  budgetId?: number;
 }

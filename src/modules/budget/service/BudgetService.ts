@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Budget, BudgetStatus, Prisma, ProjectStatus } from '@prisma/client';
+import { BudgetStatus, Prisma, ProjectStatus } from '@prisma/client';
 import { BusinessRuleException, EntityNotFoundException } from '../../../common/exceptions';
 import { ProjectDTOResponse } from '../../project/dto/response/ProjectDTOResponse';
 import { ProjectService } from '../../project/service/ProjectService';
@@ -8,6 +8,7 @@ import { ListBudgetDTOQuery } from '../dto/request/ListBudgetDTOQuery';
 import { UpdateBudgetDTORequest } from '../dto/request/UpdateBudgetDTORequest';
 import { BudgetDTOResponse } from '../dto/response/BudgetDTOResponse';
 import { BudgetRepository } from '../repository/BudgetRepository';
+import { BudgetWithLead } from '../types/budget-with-lead.type';
 
 @Injectable()
 export class BudgetService {
@@ -26,10 +27,11 @@ export class BudgetService {
         valor: dto.valor,
         status: dto.status,
         dataValidade: dto.dataValidade ? new Date(dto.dataValidade) : undefined,
-        cliente: { connect: { id: dto.clienteId } },
+        cliente: dto.clienteId ? { connect: { id: dto.clienteId } } : undefined,
+        lead: dto.leadId ? { connect: { id: dto.leadId } } : undefined,
       };
       const budget = await this.budgetRepository.create(data);
-      return BudgetDTOResponse.fromEntity(budget);
+      return this.findById(budget.id);
     } catch (error) {
       this.logger.error('Erro ao criar orçamento', (error as Error).stack);
       throw error;
@@ -61,9 +63,10 @@ export class BudgetService {
         status: dto.status,
         dataValidade: dto.dataValidade ? new Date(dto.dataValidade) : undefined,
         cliente: dto.clienteId ? { connect: { id: dto.clienteId } } : undefined,
+        lead: dto.leadId ? { connect: { id: dto.leadId } } : undefined,
       };
-      const budget = await this.budgetRepository.update(id, data);
-      return BudgetDTOResponse.fromEntity(budget);
+      await this.budgetRepository.update(id, data);
+      return this.findById(id);
     } catch (error) {
       this.logger.error(`Erro ao atualizar orçamento ${id}`, (error as Error).stack);
       throw error;
@@ -95,6 +98,11 @@ export class BudgetService {
         'Não é possível converter um orçamento cancelado ou reprovado.',
       );
     }
+    if (!budget.clienteId) {
+      throw new BusinessRuleException(
+        'Este orçamento está vinculado a um lead. Converta o lead em cliente antes de gerar o projeto.',
+      );
+    }
 
     try {
       const project = await this.projectService.create({
@@ -115,7 +123,7 @@ export class BudgetService {
     }
   }
 
-  private async getExistingBudget(id: number): Promise<Budget> {
+  private async getExistingBudget(id: number): Promise<BudgetWithLead> {
     const budget = await this.budgetRepository.findById(id);
     if (!budget) {
       throw new EntityNotFoundException('Orçamento', id);

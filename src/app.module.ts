@@ -5,6 +5,7 @@ import { TenantModule } from './common/tenant';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ClientModule } from './modules/client/client.module';
+import { LeadModule } from './modules/lead/lead.module';
 import { EmployeeModule } from './modules/employee/employee.module';
 import { ProjectModule } from './modules/project/project.module';
 import { BudgetModule } from './modules/budget/budget.module';
@@ -25,6 +26,7 @@ import { BillingModule } from './modules/billing/billing.module';
     PrismaModule,
     AuthModule,
     ClientModule,
+    LeadModule,
     EmployeeModule,
     ProjectModule,
     BudgetModule,

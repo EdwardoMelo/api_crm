@@ -127,4 +127,36 @@ describe('CashFlow (e2e)', () => {
 
     await request(app.getHttpServer()).get(`/api/cashflow/${id}`).set(bearer(token)).expect(404);
   });
+
+  it('vincula lançamento a um orçamento', async () => {
+    const cliente = await request(app.getHttpServer())
+      .post('/api/clients')
+      .set(bearer(token))
+      .send({ nome: 'Cliente CF', email: 'cliente@cf.com' })
+      .expect(201);
+
+    const budget = await request(app.getHttpServer())
+      .post('/api/budgets')
+      .set(bearer(token))
+      .send({ clienteId: cliente.body.id, titulo: 'Orçamento CF', valor: 5000 })
+      .expect(201);
+
+    const created = await request(app.getHttpServer())
+      .post('/api/cashflow')
+      .set(bearer(token))
+      .send({
+        descricao: 'Entrada do orçamento',
+
+        valor: 5000,
+
+        tipo: 'ENTRADA',
+
+        dataCompetencia: '2026-05-01T00:00:00.000Z',
+
+        budgetId: budget.body.id,
+      })
+      .expect(201);
+
+    expect(created.body.budgetId).toBe(budget.body.id);
+  });
 });

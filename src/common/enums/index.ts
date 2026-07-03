@@ -9,5 +9,6 @@ export {
   CashFlowSourceType,
   InstallmentPlanStatus,
   EmailStatus,
+  LeadStatus,
   users_role as UserRole,
 } from '@prisma/client';

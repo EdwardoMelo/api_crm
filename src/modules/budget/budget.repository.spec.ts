@@ -48,6 +48,8 @@ describe('BudgetRepository', () => {
       where: { tenantId: 1 },
 
       orderBy: { createdAt: 'desc' },
+
+      include: { lead: true },
     });
   });
 

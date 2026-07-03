@@ -46,6 +46,7 @@ export async function cleanSystemData(prisma: PrismaClient): Promise<void> {
   await prisma.fixedIncome.deleteMany({ where: tenantFilter });
   await prisma.project.deleteMany({ where: tenantFilter });
   await prisma.budget.deleteMany({ where: tenantFilter });
+  await prisma.lead.deleteMany({ where: tenantFilter });
   await prisma.employee.deleteMany({ where: tenantFilter });
   await prisma.client.deleteMany({ where: tenantFilter });
   await prisma.emailLog.deleteMany({ where: tenantFilter });

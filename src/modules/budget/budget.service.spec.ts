@@ -51,9 +51,19 @@ describe('BudgetService', () => {
 
   it('cria orçamento conectando o cliente', async () => {
     repository.create.mockResolvedValue(buildBudget());
+    repository.findById.mockResolvedValue(buildBudget());
     await service.create({ clienteId: 10, titulo: 'Website', valor: 15000 });
     expect(repository.create).toHaveBeenCalledWith(
       expect.objectContaining({ cliente: { connect: { id: 10 } } }),
+    );
+  });
+
+  it('cria orçamento conectando o lead quando informado leadId', async () => {
+    repository.create.mockResolvedValue(buildBudget({ clienteId: null, leadId: 5 } as never));
+    repository.findById.mockResolvedValue(buildBudget({ clienteId: null, leadId: 5 } as never));
+    await service.create({ leadId: 5, titulo: 'Website', valor: 15000 });
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ lead: { connect: { id: 5 } } }),
     );
   });
 
@@ -95,6 +105,12 @@ describe('BudgetService', () => {
       await expect(service.convertToProject(1)).rejects.toBeInstanceOf(BusinessRuleException);
     });
 
+    it('falha se o orçamento está vinculado a um lead (sem cliente)', async () => {
+      repository.findById.mockResolvedValue(buildBudget({ clienteId: null } as never));
+      await expect(service.convertToProject(1)).rejects.toBeInstanceOf(BusinessRuleException);
+      expect(projectService.create).not.toHaveBeenCalled();
+    });
+
     it('propaga erro ao converter', async () => {
       repository.findById.mockResolvedValue(buildBudget());
       projectService.create.mockRejectedValue(new Error('db'));
@@ -118,7 +134,9 @@ describe('BudgetService', () => {
   });
 
   it('update retorna orçamento atualizado', async () => {
-    repository.findById.mockResolvedValue(buildBudget());
+    repository.findById
+      .mockResolvedValueOnce(buildBudget())
+      .mockResolvedValueOnce(buildBudget({ titulo: 'Novo' }));
     repository.update.mockResolvedValue(buildBudget({ titulo: 'Novo' }));
     expect((await service.update(1, { titulo: 'Novo' })).titulo).toBe('Novo');
   });

@@ -25,6 +25,7 @@ model Client {
   tenants          tenants           @relation(fields: [tenantId], references: [id])
   fixedIncomes     FixedIncome[]
   installmentPlans InstallmentPlan[]
+  leads            Lead[]
   projects         Project[]
 
   @@index([nome])
@@ -63,7 +64,7 @@ model Employee {
 
 model Budget {
   id           Int           @id @default(autoincrement())
-  clienteId    Int
+  clienteId    Int?
   titulo       String
   descricao    String?       @db.Text
   valor        Decimal       @db.Decimal(12, 2)
@@ -74,9 +75,12 @@ model Budget {
   tenantId     Int
   createdBy    String        @default("system") @db.VarChar(20)
   updatedBy    String        @default("system") @db.VarChar(20)
+  leadId       Int?
   budget_files budget_files?
-  cliente      Client        @relation(fields: [clienteId], references: [id])
+  cliente      Client?       @relation(fields: [clienteId], references: [id], onDelete: Restrict)
+  lead         Lead?         @relation(fields: [leadId], references: [id])
   tenants      tenants       @relation(fields: [tenantId], references: [id])
+  cash_flows   CashFlow[]
   email_logs   EmailLog[]
   project      Project?
 
@@ -84,6 +88,7 @@ model Budget {
   @@index([status])
   @@index([tenantId])
   @@index([createdBy])
+  @@index([leadId])
   @@map("budgets")
 }
 
@@ -142,6 +147,8 @@ model CashFlow {
   fixedExpenseId        Int?
   fixedIncomeId         Int?
   installmentPlanItemId Int?                 @unique
+  budgetId              Int?
+  budget                Budget?              @relation(fields: [budgetId], references: [id])
   client                Client?              @relation(fields: [clientId], references: [id])
   employee              Employee?            @relation(fields: [employeeId], references: [id])
   fixedExpense          FixedExpense?        @relation(fields: [fixedExpenseId], references: [id])
@@ -163,6 +170,7 @@ model CashFlow {
   @@index([fixedExpenseId])
   @@index([fixedIncomeId])
   @@index([sourceType])
+  @@index([budgetId])
   @@map("cash_flows")
 }
 
@@ -219,6 +227,7 @@ model tenants {
   fixedIncomes            FixedIncome[]
   installmentPlanItems    InstallmentPlanItem[]
   installmentPlans        InstallmentPlan[]
+  leads                   Lead[]
   project_files           project_files[]
   projects                Project[]
   tenant_billing_accounts tenant_billing_accounts?
@@ -593,6 +602,33 @@ model tenant_subscriptions {
   @@index([status])
 }
 
+model Lead {
+  id                Int         @id @default(autoincrement())
+  nome              String      @db.VarChar(180)
+  email             String?     @db.VarChar(180)
+  telefone          String?     @db.VarChar(40)
+  empresa           String?     @db.VarChar(180)
+  origem            String?     @db.VarChar(120)
+  observacoes       String?     @db.Text
+  status            LeadStatus  @default(NOVO)
+  convertedClientId Int?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  tenantId          Int
+  createdBy         String      @default("system") @db.VarChar(20)
+  updatedBy         String      @default("system") @db.VarChar(20)
+  budgets           Budget[]
+  convertedClient   Client?     @relation(fields: [convertedClientId], references: [id])
+  tenants           tenants     @relation(fields: [tenantId], references: [id])
+
+  @@index([convertedClientId])
+  @@index([createdBy])
+  @@index([nome])
+  @@index([status])
+  @@index([tenantId])
+  @@map("leads")
+}
+
 enum TipoContratacao {
   CLT
   PJ
@@ -704,4 +740,12 @@ enum tenants_billingStatus {
   PAST_DUE
   EXPIRED
   CANCELLED
+}
+
+enum LeadStatus {
+  NOVO
+  EM_CONTATO
+  QUALIFICADO
+  CONVERTIDO
+  PERDIDO
 }

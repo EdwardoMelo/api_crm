@@ -71,7 +71,13 @@ export class BudgetEmailService {
 
     this.assertCanSendEmail(budget.status);
 
-    if (!budget.cliente.email?.trim()) {
+    const cliente = budget.cliente;
+    if (!cliente) {
+      throw new BusinessRuleException(
+        'Este orçamento está vinculado a um lead. Converta o lead em cliente antes de enviar o e-mail.',
+      );
+    }
+    if (!cliente.email?.trim()) {
       throw new BusinessRuleException('O cliente não possui e-mail cadastrado.');
     }
 
@@ -110,7 +116,7 @@ export class BudgetEmailService {
     let emailLog;
     try {
       emailLog = await this.emailService.sendCustomEmail(
-        budget.cliente.email,
+        cliente.email,
         resolved.assunto,
         finalHtml,
         [attachment],
@@ -123,7 +129,7 @@ export class BudgetEmailService {
       modoAnexo = email_logs_modoAnexo.LINK;
       finalHtml = `${htmlBody}<br><br><p>Segue o link para download do orçamento: <a href="${linkArquivo}">${storedFile.fileName}</a></p>`;
       emailLog = await this.emailService.sendCustomEmail(
-        budget.cliente.email,
+        cliente.email,
         resolved.assunto,
         finalHtml,
         undefined,
@@ -162,6 +168,12 @@ export class BudgetEmailService {
     if (!budget) {
       throw new EntityNotFoundException('Orçamento', budgetId);
     }
+    const cliente = budget.cliente;
+    if (!cliente) {
+      throw new BusinessRuleException(
+        'Este orçamento está vinculado a um lead. Converta o lead em cliente para montar o e-mail.',
+      );
+    }
 
     const tenantId = this.tenantContext.getTenantId();
     const [tenant, fiscal] = await Promise.all([
@@ -191,11 +203,11 @@ export class BudgetEmailService {
         endereco: enderecoParts.length > 0 ? enderecoParts.join(', ') : null,
       },
       cliente: {
-        nome: budget.cliente.nome,
-        email: budget.cliente.email,
-        telefone: budget.cliente.telefone,
-        empresa: budget.cliente.empresa,
-        documento: budget.cliente.documento,
+        nome: cliente.nome,
+        email: cliente.email,
+        telefone: cliente.telefone,
+        empresa: cliente.empresa,
+        documento: cliente.documento,
       },
       orcamento: {
         titulo: budget.titulo,

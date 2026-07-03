@@ -14,6 +14,7 @@ export class CashFlowDTOResponse {
   projectId: number | null;
   clientId: number | null;
   employeeId: number | null;
+  budgetId: number | null;
   sourceType: CashFlowSourceType;
   fixedExpenseId: number | null;
   fixedIncomeId: number | null;
@@ -35,6 +36,7 @@ export class CashFlowDTOResponse {
     dto.projectId = entity.projectId;
     dto.clientId = entity.clientId;
     dto.employeeId = entity.employeeId;
+    dto.budgetId = entity.budgetId;
     dto.sourceType = entity.sourceType;
     dto.fixedExpenseId = entity.fixedExpenseId;
     dto.fixedIncomeId = entity.fixedIncomeId;

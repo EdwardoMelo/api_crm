@@ -7,6 +7,7 @@ import { ActorContextService, auditCreateFields, auditUpdateFields } from '../..
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ListBudgetDTOQuery } from '../dto/request/ListBudgetDTOQuery';
+import { BudgetWithLead } from '../types/budget-with-lead.type';
 import { budgetListSort } from '../utils/budget-sort.utils';
 
 @Injectable()
@@ -29,17 +30,19 @@ export class BudgetRepository {
     });
   }
 
-  findAll(query?: ListBudgetDTOQuery): Promise<Budget[]> {
+  findAll(query?: ListBudgetDTOQuery): Promise<BudgetWithLead[]> {
     const sort = budgetListSort.resolve(query);
     return this.prisma.budget.findMany({
       where: { tenantId: this.tenantContext.getTenantId() },
       orderBy: budgetListSort.buildPrismaOrderBy(sort),
+      include: { lead: true },
     });
   }
 
-  findById(id: number): Promise<Budget | null> {
+  findById(id: number): Promise<BudgetWithLead | null> {
     return this.prisma.budget.findFirst({
       where: { id, tenantId: this.tenantContext.getTenantId() },
+      include: { lead: true },
     });
   }
 

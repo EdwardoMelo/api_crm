@@ -52,6 +52,7 @@ export class CashFlowService {
         project: dto.projectId ? { connect: { id: dto.projectId } } : undefined,
         client: dto.clientId ? { connect: { id: dto.clientId } } : undefined,
         employee: dto.employeeId ? { connect: { id: dto.employeeId } } : undefined,
+        budget: dto.budgetId ? { connect: { id: dto.budgetId } } : undefined,
       };
       const cashFlow = await this.cashFlowRepository.create(data);
       return this.toResponse(cashFlow);
@@ -112,6 +113,7 @@ export class CashFlowService {
         project: dto.projectId ? { connect: { id: dto.projectId } } : undefined,
         client: dto.clientId ? { connect: { id: dto.clientId } } : undefined,
         employee: dto.employeeId ? { connect: { id: dto.employeeId } } : undefined,
+        budget: dto.budgetId ? { connect: { id: dto.budgetId } } : undefined,
       };
       const cashFlow = await this.cashFlowRepository.update(id, data);
 

@@ -13,8 +13,13 @@ import { BudgetStatus } from '../../../../common/enums';
 import { Trim } from '../../../../common/decorators';
 
 export class CreateBudgetDTORequest {
+  @IsOptional()
   @IsInt()
-  clienteId: number;
+  clienteId?: number;
+
+  @IsOptional()
+  @IsInt()
+  leadId?: number;
 
   @Trim()
   @IsString()

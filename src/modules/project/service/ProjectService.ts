@@ -33,7 +33,7 @@ export class ProjectService {
         status: dto.status,
         dataInicio: dto.dataInicio ? new Date(dto.dataInicio) : undefined,
         dataFimPrevista: dto.dataFimPrevista ? new Date(dto.dataFimPrevista) : undefined,
-        cliente: { connect: { id: dto.clienteId } },
+        cliente: dto.clienteId ? { connect: { id: dto.clienteId } } : undefined,
         budget: dto.budgetId ? { connect: { id: dto.budgetId } } : undefined,
       };
       const project = await this.projectRepository.create(data);

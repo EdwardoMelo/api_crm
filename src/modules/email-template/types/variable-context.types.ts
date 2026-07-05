@@ -33,6 +33,7 @@ export interface EmailTemplateUsuarioContext {
 export interface EmailTemplateVariableContext {
   empresa: EmailTemplateEmpresaContext;
   cliente: EmailTemplateClienteContext;
-  orcamento: EmailTemplateOrcamentoContext;
+  // Opcional: contextos gerais (ex.: campanhas de e-mail) não têm orçamento.
+  orcamento?: EmailTemplateOrcamentoContext;
   usuario: EmailTemplateUsuarioContext;
 }

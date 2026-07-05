@@ -23,14 +23,18 @@ export class BudgetEmailContextDTOResponse {
     arquivo: BudgetFileDTOResponse | null;
     templates: EmailTemplateDTOResponse[];
   }): BudgetEmailContextDTOResponse {
+    const orcamento = params.context.orcamento;
+    if (!orcamento) {
+      throw new Error('Contexto de orçamento ausente ao montar o e-mail do orçamento.');
+    }
     const dto = new BudgetEmailContextDTOResponse();
     dto.empresa = params.context.empresa;
     dto.cliente = params.context.cliente;
-    dto.orcamento = params.context.orcamento;
+    dto.orcamento = orcamento;
     dto.usuario = params.context.usuario;
     dto.arquivo = params.arquivo;
     dto.templates = params.templates;
-    dto.assuntoSugerido = `Orçamento: ${params.context.orcamento.titulo}`;
+    dto.assuntoSugerido = `Orçamento: ${orcamento.titulo}`;
     dto.destinatario = params.context.cliente.email;
     return dto;
   }

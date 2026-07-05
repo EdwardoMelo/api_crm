@@ -63,7 +63,14 @@ Maria`;
     const shortNameContext: EmailTemplateVariableContext = {
       ...context,
       cliente: { ...context.cliente, nome: 'Jo' },
-      orcamento: { ...context.orcamento, titulo: 'João projeto completo' },
+      orcamento: {
+        titulo: 'João projeto completo',
+        valor: 1500,
+        valorFormatado: 'R$ 1.500,00',
+        descricao: 'Desenvolvimento de site',
+        validade: '2026-07-01T00:00:00.000Z',
+        validadeFormatada: '01/07/2026',
+      },
     };
 
     const preview = detectEmailTemplateVariables(

@@ -201,7 +201,11 @@ describe('FixedExpenseService', () => {
       const suggestion = service.suggestRenewalStartsOn(
         buildFixedExpense({ endsOn: new Date('2000-01-10') }),
       );
-      expect(suggestion).toBe(new Date().toISOString().slice(0, 10));
+      // "hoje" deve ser calculado em horario local (igual ao servico),
+      // senao o teste quebra na janela noturna em que a data UTC ja virou.
+      const expectedToday = new Date();
+      expectedToday.setHours(0, 0, 0, 0);
+      expect(suggestion).toBe(expectedToday.toISOString().slice(0, 10));
     });
   });
 });

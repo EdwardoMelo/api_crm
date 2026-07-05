@@ -13,8 +13,9 @@ import { ProjectStatus } from '../../../../common/enums';
 import { Trim } from '../../../../common/decorators';
 
 export class CreateProjectDTORequest {
+  @IsOptional()
   @IsInt()
-  clienteId: number;
+  clienteId?: number;
 
   @IsOptional()
   @IsInt()

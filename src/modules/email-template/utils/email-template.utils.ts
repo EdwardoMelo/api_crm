@@ -70,12 +70,14 @@ export function buildEmailTemplateVariableMap(
     context.cliente.documento,
     formatDocumento(context.cliente.documento),
   );
-  push('orcamento.titulo', context.orcamento.titulo);
-  push('orcamento.valor', String(context.orcamento.valor));
-  push('orcamento.valorFormatado', context.orcamento.valorFormatado);
-  push('orcamento.descricao', context.orcamento.descricao);
-  push('orcamento.validade', context.orcamento.validade);
-  push('orcamento.validadeFormatada', context.orcamento.validadeFormatada);
+  if (context.orcamento) {
+    push('orcamento.titulo', context.orcamento.titulo);
+    push('orcamento.valor', String(context.orcamento.valor));
+    push('orcamento.valorFormatado', context.orcamento.valorFormatado);
+    push('orcamento.descricao', context.orcamento.descricao);
+    push('orcamento.validade', context.orcamento.validade);
+    push('orcamento.validadeFormatada', context.orcamento.validadeFormatada);
+  }
   push('orcamento.linkArquivo', linkArquivo);
   push('usuario.nome', context.usuario.nome);
   push('usuario.email', context.usuario.email);
@@ -97,14 +99,21 @@ export function resolveEmailTemplate(
   text: string,
   context: EmailTemplateVariableContext,
   linkArquivo?: string | null,
+  blankUnresolved = false,
 ): string {
   const variableMap = buildEmailTemplateVariableMap(context, linkArquivo);
   return text.replace(PLACEHOLDER_PATTERN, (match, key: string) => {
     if (!EMAIL_TEMPLATE_VARIABLE_KEYS.includes(key as EmailTemplateVariableKey)) {
-      return match;
+      // Placeholder desconhecido: em contextos gerais (campanhas) removemos;
+      // no fluxo de orçamento mantemos o texto original.
+      return blankUnresolved ? '' : match;
     }
     const values = variableMap.get(key as EmailTemplateVariableKey);
-    return values?.[0] ?? match;
+    if (values?.[0] !== undefined) {
+      return values[0];
+    }
+    // Variável conhecida mas sem valor no contexto atual.
+    return blankUnresolved ? '' : match;
   });
 }
 

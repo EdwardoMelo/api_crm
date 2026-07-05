@@ -3,7 +3,7 @@ import { ProjectStatus } from '../../../../common/enums';
 
 export class ProjectDTOResponse {
   id: number;
-  clienteId: number;
+  clienteId: number | null;
   budgetId: number | null;
   titulo: string;
   descricao: string | null;

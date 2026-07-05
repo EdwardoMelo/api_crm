@@ -64,6 +64,15 @@ def remote_pm2_sync_command(app_name: str) -> str:
     )
 
 
+def remote_pm2_worker_sync_command(worker_name: str) -> str:
+    """Reinicia o worker de campanhas (consumidor RabbitMQ) ou inicia-o."""
+    return (
+        f'if pm2 describe "{worker_name}" >/dev/null 2>&1; then '
+        f'pm2 restart "{worker_name}" --update-env; '
+        f'else pm2 start npm --name "{worker_name}" -- run worker; fi && pm2 save'
+    )
+
+
 def main() -> int:
     project_root = Path(__file__).resolve().parents[1]
     load_dotenv(project_root / ".env")
@@ -72,6 +81,7 @@ def main() -> int:
     password = required_env("VPS_PASSWORD")
     project_path = required_env("VPS_PROJECT_PATH")
     app_name = required_env("VPS_PM2_PROCESS_NAME")
+    worker_name = os.environ.get("VPS_WORKER_PM2_PROCESS_NAME", "").strip() or f"{app_name}_worker"
     branch = os.environ.get("VPS_GIT_BRANCH", "main").strip() or "main"
     user = os.environ.get("VPS_USER", "root").strip() or "root"
     port = int(os.environ.get("VPS_PORT", "22"))
@@ -84,6 +94,7 @@ def main() -> int:
             "npx prisma generate",
             "npm run build",
             remote_pm2_sync_command(app_name),
+            remote_pm2_worker_sync_command(worker_name),
         ]
     )
 
